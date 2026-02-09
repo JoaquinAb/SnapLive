@@ -38,8 +38,9 @@ function DashboardContent() {
     useEffect(() => {
         const paymentParam = searchParams.get('payment');
         if (paymentParam === 'success') {
-            setSuccessMessage('¡Pago completado exitosamente! Ya podés crear tu evento.');
-            router.replace('/dashboard');
+            // Guardar estado en localStorage para persistencia temporal si es necesario
+            // Redirigir inmediatamente a la creación del evento
+            router.push('/dashboard/events/new?payment=success');
         }
     }, [searchParams, router]);
 
