@@ -178,13 +178,13 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
                 }
             ],
             back_urls: {
-                success: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=success`,
-                failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=failed`,
-                pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=pending`
+                success: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+                failure: `${process.env.FRONTEND_URL}/dashboard?payment=failed`,
+                pending: `${process.env.FRONTEND_URL}/dashboard?payment=pending`
             },
-            // auto_return: 'approved', // Disabled locally because MP rejects localhost for auto_return
+            auto_return: 'approved',
             external_reference: req.userId,
-            notification_url: `${process.env.BACKEND_URL || 'https://your-backend.com'}/api/payments/mercadopago/webhook`
+            notification_url: `${process.env.BACKEND_URL}/api/payments/mercadopago/webhook`
         };
 
         console.log('Creating MercadoPago preference with body:', JSON.stringify(preferenceBody, null, 2));
