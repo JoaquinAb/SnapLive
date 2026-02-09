@@ -1,13 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../../hooks/useAuth';
 import { api } from '../../../../lib/api';
 
 /**
- * Página para Crear Evento
+ * Contenido del formulario de creación de evento
  */
-export default function CreateEventPage() {
+function CreateEventContent() {
     const { isAuthenticated, loading: authLoading } = useAuth();
     const [name, setName] = useState('');
     const [type, setType] = useState('wedding');
@@ -15,6 +15,8 @@ export default function CreateEventPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const paymentStatus = searchParams.get('payment');
 
     // Redirigir si no está autenticado
     useEffect(() => {
@@ -60,6 +62,12 @@ export default function CreateEventPage() {
                     <h1 className="mt-lg">Crear tu Evento</h1>
                     <p className="text-muted">Completá los datos de tu evento</p>
                 </div>
+
+                {paymentStatus === 'success' && (
+                    <div className="alert alert-success mb-lg">
+                        <strong>¡Pago exitoso!</strong> Podés crear tu evento ahora.
+                    </div>
+                )}
 
                 {error && (
                     <div className="alert alert-error">
@@ -121,5 +129,20 @@ export default function CreateEventPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+/**
+ * Página principal con Suspense
+ */
+export default function CreateEventPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
+                <div className="spinner"></div>
+            </div>
+        }>
+            <CreateEventContent />
+        </Suspense>
     );
 }
