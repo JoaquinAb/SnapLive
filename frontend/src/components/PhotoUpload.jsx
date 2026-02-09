@@ -56,6 +56,11 @@ export default function PhotoUpload({ eventSlug, onUploadComplete }) {
                 onUploadComplete(result.photos);
             }
 
+            // Show warning if some photos were rejected
+            if (result.rejectedPhotos && result.rejectedPhotos.length > 0) {
+                setError(`⚠️ ${result.rejectedPhotos.length} foto(s) rechazada(s) por contenido inapropiado`);
+            }
+
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }

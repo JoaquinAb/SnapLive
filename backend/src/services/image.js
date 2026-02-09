@@ -3,15 +3,22 @@ const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
 
-// Demo mode - use local storage instead of Cloudinary
-const DEMO_MODE = process.env.DEMO_MODE === 'true' ||
-    !process.env.CLOUDINARY_API_KEY ||
-    process.env.CLOUDINARY_API_KEY === 'your-api-key';
+// Demo mode - use local storage if Cloudinary is not configured
+const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET;
+
+const DEMO_MODE = !isCloudinaryConfigured;
 
 // Only load Cloudinary if not in demo mode
 let cloudinary = null;
 if (!DEMO_MODE) {
-    cloudinary = require('../config/cloudinary');
+    try {
+        cloudinary = require('../config/cloudinary');
+    } catch (e) {
+        console.error('Failed to load Cloudinary config:', e);
+        // Fallback to demo mode if config fails
+    }
 }
 
 /**
@@ -44,26 +51,34 @@ class ImageService {
             .toBuffer();
 
         // Use demo mode (local storage) or Cloudinary
-        if (DEMO_MODE) {
+        if (DEMO_MODE || !cloudinary) {
+            console.log('Using local storage (Demo Mode)');
             return await this.uploadToLocal(optimizedBuffer, thumbnailBuffer, eventId);
         } else {
-            // Upload main image
-            const mainUpload = await this.uploadToCloudinary(
-                optimizedBuffer,
-                `snaplive/events/${eventId}`
-            );
+            try {
+                // Upload main image
+                const mainUploadPromise = this.uploadToCloudinaryStream(
+                    optimizedBuffer,
+                    `snaplive/events/${eventId}`
+                );
 
-            // Upload thumbnail
-            const thumbUpload = await this.uploadToCloudinary(
-                thumbnailBuffer,
-                `snaplive/events/${eventId}/thumbnails`
-            );
+                // Upload thumbnail
+                const thumbUploadPromise = this.uploadToCloudinaryStream(
+                    thumbnailBuffer,
+                    `snaplive/events/${eventId}/thumbnails`
+                );
 
-            return {
-                url: mainUpload.secure_url,
-                thumbnailUrl: thumbUpload.secure_url,
-                publicId: mainUpload.public_id
-            };
+                const [mainUpload, thumbUpload] = await Promise.all([mainUploadPromise, thumbUploadPromise]);
+
+                return {
+                    url: mainUpload.secure_url,
+                    thumbnailUrl: thumbUpload.secure_url,
+                    publicId: mainUpload.public_id
+                };
+            } catch (error) {
+                console.error('Cloudinary upload failed, falling back to local storage:', error);
+                return await this.uploadToLocal(optimizedBuffer, thumbnailBuffer, eventId);
+            }
         }
     }
 
@@ -100,12 +115,12 @@ class ImageService {
     }
 
     /**
-     * Upload buffer to Cloudinary
+     * Upload buffer to Cloudinary using stream
      * @param {Buffer} buffer - Image buffer
      * @param {string} folder - Cloudinary folder
      * @returns {Promise<object>} - Cloudinary upload result
      */
-    static uploadToCloudinary(buffer, folder) {
+    static uploadToCloudinaryStream(buffer, folder) {
         return new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {

@@ -220,7 +220,7 @@ export default function HomePage() {
             }}>
                 <div className="container">
                     <p className="text-muted">
-                        © 2024 SnapLive. Hecho con ❤️ para eventos increíbles.
+                        © 2026 SnapLive. Hecho con ❤️ para eventos increíbles.
                     </p>
                 </div>
             </footer>

@@ -3,6 +3,7 @@ const { Photo, Event } = require('../models');
 const { optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const ImageService = require('../services/image');
+const ModerationService = require('../services/moderation');
 const wsService = require('../services/websocket');
 
 const router = express.Router();
@@ -27,6 +28,16 @@ router.post('/:eventSlug', upload.array('photos', 5), async (req, res) => {
             });
         }
 
+        // Verificar si el evento ya pasó
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const eventDate = new Date(event.eventDate);
+        if (eventDate < today) {
+            return res.status(403).json({
+                error: 'Este evento ya finalizó. No se pueden subir más fotos.'
+            });
+        }
+
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({
                 error: 'No se subieron fotos'
@@ -34,9 +45,21 @@ router.post('/:eventSlug', upload.array('photos', 5), async (req, res) => {
         }
 
         const uploadedPhotos = [];
+        const rejectedPhotos = [];
 
         // Process each uploaded file
         for (const file of req.files) {
+            // Check content moderation
+            const moderationResult = await ModerationService.checkImage(file.buffer);
+
+            if (!moderationResult.safe) {
+                rejectedPhotos.push({
+                    filename: file.originalname,
+                    reason: moderationResult.reason
+                });
+                continue; // Skip this photo
+            }
+
             // Upload to Cloudinary with optimization
             const { url, thumbnailUrl, publicId } = await ImageService.uploadPhoto(
                 file.buffer,
@@ -65,9 +88,24 @@ router.post('/:eventSlug', upload.array('photos', 5), async (req, res) => {
             });
         }
 
+        // If all photos were rejected
+        if (uploadedPhotos.length === 0 && rejectedPhotos.length > 0) {
+            return res.status(400).json({
+                error: 'Las fotos fueron rechazadas por contener contenido inapropiado',
+                rejectedPhotos
+            });
+        }
+
+        // Build response message
+        let message = `${uploadedPhotos.length} foto(s) subida(s) exitosamente`;
+        if (rejectedPhotos.length > 0) {
+            message += `. ${rejectedPhotos.length} foto(s) rechazada(s) por contenido inapropiado`;
+        }
+
         res.status(201).json({
-            message: `${uploadedPhotos.length} foto(s) subida(s) exitosamente`,
-            photos: uploadedPhotos
+            message,
+            photos: uploadedPhotos,
+            rejectedPhotos: rejectedPhotos.length > 0 ? rejectedPhotos : undefined
         });
     } catch (error) {
         console.error('Upload photos error:', error);

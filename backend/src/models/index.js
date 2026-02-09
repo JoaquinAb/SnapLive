@@ -3,6 +3,7 @@ const User = require('./User');
 const Event = require('./Event');
 const Photo = require('./Photo');
 const Payment = require('./Payment');
+const PasswordReset = require('./PasswordReset');
 
 // Define relationships
 
@@ -50,10 +51,22 @@ Payment.belongsTo(Event, {
     as: 'event'
 });
 
+// User has many PasswordResets
+User.hasMany(PasswordReset, {
+    foreignKey: 'userId',
+    as: 'passwordResets',
+    onDelete: 'CASCADE'
+});
+PasswordReset.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user'
+});
+
 module.exports = {
     sequelize,
     User,
     Event,
     Photo,
-    Payment
+    Payment,
+    PasswordReset
 };

@@ -1,7 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { User, Event } = require('../models');
+const { User, Event, PasswordReset } = require('../models');
 const { auth } = require('../middleware/auth');
+const { sendPasswordResetEmail } = require('../services/email');
 
 const router = express.Router();
 
@@ -53,7 +54,8 @@ router.post('/register', async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                role: user.role
             }
         });
     } catch (error) {
@@ -102,7 +104,8 @@ router.post('/login', async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                role: user.role
             }
         });
     } catch (error) {
@@ -132,4 +135,104 @@ router.get('/me', auth, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/auth/forgot-password
+ * Request password reset email
+ */
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                error: 'El email es requerido'
+            });
+        }
+
+        // Find user
+        const user = await User.findOne({ where: { email } });
+
+        // Always return success to prevent email enumeration
+        if (!user) {
+            return res.json({
+                message: 'Si el email existe, recibirás un link para restablecer tu contraseña'
+            });
+        }
+
+        // Invalidate any existing tokens for this user
+        await PasswordReset.update(
+            { used: true },
+            { where: { userId: user.id, used: false } }
+        );
+
+        // Create new reset token
+        const resetRecord = await PasswordReset.create({
+            userId: user.id
+        });
+
+        // Send email
+        const result = await sendPasswordResetEmail(email, resetRecord.token);
+
+        res.json({
+            message: 'Si el email existe, recibirás un link para restablecer tu contraseña',
+            demo: result.demo,
+            resetLink: result.demo ? result.resetLink : undefined
+        });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Error al procesar la solicitud' });
+    }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password with token
+ */
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, password } = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({
+                error: 'El token y la nueva contraseña son requeridos'
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                error: 'La contraseña debe tener al menos 6 caracteres'
+            });
+        }
+
+        // Find valid reset token
+        const resetRecord = await PasswordReset.findOne({
+            where: { token, used: false },
+            include: [{ model: User, as: 'user' }]
+        });
+
+        if (!resetRecord || !resetRecord.isValid()) {
+            return res.status(400).json({
+                error: 'El link de recuperación es inválido o ha expirado'
+            });
+        }
+
+        // Update password
+        const user = resetRecord.user;
+        user.password = password;
+        await user.save();
+
+        // Mark token as used
+        resetRecord.used = true;
+        await resetRecord.save();
+
+        res.json({
+            message: 'Contraseña actualizada exitosamente. Ya podés iniciar sesión.'
+        });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Error al restablecer la contraseña' });
+    }
+});
+
 module.exports = router;
+

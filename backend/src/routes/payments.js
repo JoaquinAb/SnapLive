@@ -1,16 +1,17 @@
 const express = require('express');
 const { Payment, User } = require('../models');
 const { auth } = require('../middleware/auth');
+const { sendPaymentConfirmationEmail } = require('../services/email');
 
 const router = express.Router();
 
-// Demo mode - allows testing without real payment credentials
-const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
+// Demo mode - only when explicitly set to true
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
 
 // Event subscription price 
 const EVENT_PRICE = {
-    stripe: 2999, // $29.99 USD in cents
-    mercadopago: 4999 // $4999 ARS
+    stripe: parseInt(process.env.STRIPE_PRICE_CENTS) || 2999, // 29.99 USD in cents
+    mercadopago: parseInt(process.env.MERCADOPAGO_PRICE_ARS) || 4999 // 4999 ARS
 };
 
 /**
@@ -31,6 +32,12 @@ router.post('/stripe/create-session', auth, async (req, res) => {
                 status: 'completed',
                 metadata: { demo: true }
             });
+
+            // Send confirmation email
+            const user = await User.findByPk(req.userId);
+            if (user) {
+                sendPaymentConfirmationEmail(user.email, user.name, 2999);
+            }
 
             return res.json({
                 demo: true,
@@ -107,6 +114,12 @@ router.post('/stripe/webhook', express.raw({ type: 'application/json' }), async 
                 metadata: { sessionId: session.id }
             });
 
+            // Send confirmation email
+            const user = await User.findByPk(userId);
+            if (user) {
+                sendPaymentConfirmationEmail(user.email, user.name, session.amount_total);
+            }
+
             console.log(`Pago completado para usuario: ${userId}`);
         }
 
@@ -135,6 +148,12 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
                 metadata: { demo: true }
             });
 
+            // Send confirmation email
+            const user = await User.findByPk(req.userId);
+            if (user) {
+                sendPaymentConfirmationEmail(user.email, user.name, 499900);
+            }
+
             return res.json({
                 demo: true,
                 message: 'Modo demo activado - pago simulado exitoso',
@@ -148,26 +167,30 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
         const { Preference } = require('mercadopago');
         const preference = new Preference(mercadopago);
 
+        const preferenceBody = {
+            items: [
+                {
+                    title: 'SnapLive - Suscripción de Evento',
+                    description: 'Creá y administrá un evento con subidas ilimitadas de fotos',
+                    quantity: 1,
+                    unit_price: EVENT_PRICE.mercadopago,
+                    currency_id: 'ARS'
+                }
+            ],
+            back_urls: {
+                success: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=success`,
+                failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=failed`,
+                pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=pending`
+            },
+            // auto_return: 'approved', // Disabled locally because MP rejects localhost for auto_return
+            external_reference: req.userId,
+            notification_url: `${process.env.BACKEND_URL || 'https://your-backend.com'}/api/payments/mercadopago/webhook`
+        };
+
+        console.log('Creating MercadoPago preference with body:', JSON.stringify(preferenceBody, null, 2));
+
         const result = await preference.create({
-            body: {
-                items: [
-                    {
-                        title: 'SnapLive - Suscripción de Evento',
-                        description: 'Creá y administrá un evento con subidas ilimitadas de fotos',
-                        quantity: 1,
-                        unit_price: EVENT_PRICE.mercadopago,
-                        currency_id: 'ARS'
-                    }
-                ],
-                back_urls: {
-                    success: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-                    failure: `${process.env.FRONTEND_URL}/dashboard?payment=failed`,
-                    pending: `${process.env.FRONTEND_URL}/dashboard?payment=pending`
-                },
-                auto_return: 'approved',
-                external_reference: req.userId,
-                notification_url: `${process.env.BACKEND_URL || 'https://your-backend.com'}/api/payments/mercadopago/webhook`
-            }
+            body: preferenceBody
         });
 
         res.json({

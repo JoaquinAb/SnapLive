@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const http = require('http');
 const path = require('path');
 const { sequelize } = require('./models');
@@ -19,7 +21,33 @@ const server = http.createServer(app);
 // Initialize WebSocket
 wsService.init(server);
 
-// Middleware
+// Security middleware
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images from different origins
+    contentSecurityPolicy: false // Disable CSP for simplicity, configure properly if needed
+}));
+
+// Rate limiting - general
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per window
+    message: { error: 'Demasiadas solicitudes. Intentá de nuevo en unos minutos.' }
+});
+
+// Rate limiting - auth (stricter)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // 10 attempts per window
+    message: { error: 'Demasiados intentos de inicio de sesión. Intentá de nuevo en 15 minutos.' }
+});
+
+// Apply rate limiting
+app.use('/api/', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+
+// CORS
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true

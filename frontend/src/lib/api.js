@@ -76,6 +76,8 @@ export const api = {
     register: (data) => request('/auth/register', { method: 'POST', body: data }),
     login: (data) => request('/auth/login', { method: 'POST', body: data }),
     getMe: () => request('/auth/me'),
+    forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),
+    resetPassword: (token, password) => request('/auth/reset-password', { method: 'POST', body: { token, password } }),
 
     // Events
     createEvent: (data) => request('/events', { method: 'POST', body: data }),

@@ -21,6 +21,8 @@ export default function DashboardPage() {
     const [successMessage, setSuccessMessage] = useState(null);
     const [expandedEvent, setExpandedEvent] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [editingEvent, setEditingEvent] = useState(null);
+    const [editName, setEditName] = useState('');
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -155,6 +157,28 @@ export default function DashboardPage() {
         }
     };
 
+    // Abrir modal de edición
+    const handleEditEvent = (event) => {
+        setEditingEvent(event);
+        setEditName(event.name);
+    };
+
+    // Guardar cambios del evento
+    const handleSaveEvent = async () => {
+        if (!editName.trim()) {
+            setError('El nombre del evento es requerido');
+            return;
+        }
+        try {
+            await api.updateEvent(editingEvent.id, { name: editName.trim() });
+            setEvents(prev => prev.map(e => e.id === editingEvent.id ? { ...e, name: editName.trim() } : e));
+            setSuccessMessage('Nombre del evento actualizado');
+            setEditingEvent(null);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     // Formatear fecha
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('es-AR', {
@@ -238,10 +262,11 @@ export default function DashboardPage() {
                                     flexDirection: 'column',
                                     gap: 'var(--space-md)'
                                 }}>
-                                    <button onClick={() => handlePayment('stripe')} className="btn btn-primary btn-lg">
-                                        💳 Pagar con Tarjeta (Stripe)
-                                    </button>
-                                    <button onClick={() => handlePayment('mercadopago')} className="btn btn-secondary btn-lg">
+                                    <button
+                                        onClick={() => handlePayment('mercadopago')}
+                                        className="btn btn-primary btn-lg"
+                                        style={{ background: '#009ee3', borderColor: '#009ee3' }}
+                                    >
                                         🇦🇷 Pagar con MercadoPago
                                     </button>
                                     <button onClick={() => setShowPaymentModal(false)} className="btn btn-secondary">
@@ -252,6 +277,51 @@ export default function DashboardPage() {
                                 <p className="text-muted mt-xl" style={{ fontSize: '0.875rem' }}>
                                     Pago único por evento • Checkout seguro • Acceso inmediato
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal de Edición de Nombre */}
+                {editingEvent && (
+                    <div style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                        padding: 'var(--space-lg)'
+                    }} onClick={() => setEditingEvent(null)}>
+                        <div className="card" style={{ maxWidth: '450px', width: '100%' }} onClick={e => e.stopPropagation()}>
+                            <div className="text-center">
+                                <span style={{ fontSize: '3rem' }}>✏️</span>
+                                <h2 className="mt-lg mb-md">Editar Nombre del Evento</h2>
+
+                                <div className="form-group mb-xl">
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        placeholder="Nombre del evento"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 'var(--space-md)'
+                                }}>
+                                    <button onClick={handleSaveEvent} className="btn btn-primary btn-lg">
+                                        💾 Guardar Cambios
+                                    </button>
+                                    <button onClick={() => setEditingEvent(null)} className="btn btn-secondary">
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -276,11 +346,27 @@ export default function DashboardPage() {
                                     <div>
                                         <h2 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                                             {event.name}
-                                            {event.isActive && (
-                                                <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
-                                                    Activo
-                                                </span>
-                                            )}
+                                            {(() => {
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const eventDate = new Date(event.eventDate);
+                                                const isFinished = eventDate < today;
+
+                                                if (isFinished) {
+                                                    return (
+                                                        <span className="badge badge-secondary" style={{ fontSize: '0.7rem' }}>
+                                                            ✓ Finalizado
+                                                        </span>
+                                                    );
+                                                } else if (event.isActive) {
+                                                    return (
+                                                        <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
+                                                            Activo
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </h2>
                                         <p className="text-muted">
                                             {getEventType(event.type)} • {formatDate(event.eventDate)} • {event.photos?.length || 0} fotos
@@ -324,6 +410,12 @@ export default function DashboardPage() {
                                                     >
                                                         📺 Abrir Modo Pantalla
                                                     </Link>
+                                                    <button
+                                                        onClick={() => handleEditEvent(event)}
+                                                        className="btn btn-secondary"
+                                                    >
+                                                        ✏️ Editar Nombre
+                                                    </button>
                                                     <button
                                                         onClick={() => handleDeleteEvent(event.id)}
                                                         className="btn btn-secondary"
@@ -380,10 +472,16 @@ export default function DashboardPage() {
                             maxWidth: '300px',
                             margin: '0 auto'
                         }}>
+                            {/* Stripe disabled
                             <button onClick={() => handlePayment('stripe')} className="btn btn-primary btn-lg">
                                 💳 Pagar con Tarjeta (Stripe)
                             </button>
-                            <button onClick={() => handlePayment('mercadopago')} className="btn btn-secondary btn-lg">
+                            */}
+                            <button
+                                onClick={() => handlePayment('mercadopago')}
+                                className="btn btn-primary btn-lg"
+                                style={{ background: '#009ee3', borderColor: '#009ee3' }}
+                            >
                                 🇦🇷 Pagar con MercadoPago
                             </button>
                         </div>

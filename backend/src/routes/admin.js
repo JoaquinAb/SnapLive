@@ -1,4 +1,5 @@
 const express = require('express');
+const { Op } = require('sequelize');
 const { User, Event, Photo } = require('../models');
 const { auth } = require('../middleware/auth');
 const { isAdmin } = require('../middleware/admin');
@@ -18,7 +19,19 @@ router.get('/stats', async (req, res) => {
         const totalUsers = await User.count();
         const totalEvents = await Event.count();
         const totalPhotos = await Photo.count();
-        const activeEvents = await Event.count({ where: { isActive: true } });
+
+        // Only count events that are active AND haven't finished (eventDate >= today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const activeEvents = await Event.count({
+            where: {
+                isActive: true,
+                eventDate: {
+                    [Op.gte]: today
+                }
+            }
+        });
 
         res.json({
             users: totalUsers,

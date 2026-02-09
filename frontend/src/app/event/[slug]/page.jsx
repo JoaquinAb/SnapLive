@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '../../../lib/api';
 import PhotoUpload from '../../../components/PhotoUpload';
@@ -20,6 +20,22 @@ export default function GuestEventPage() {
     const [activeTab, setActiveTab] = useState('upload');
 
     const { photos, connected, addPhoto } = usePhotos(slug);
+
+    // Verificar si el evento ya pasó
+    const isEventFinished = useMemo(() => {
+        if (!event?.eventDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const eventDate = new Date(event.eventDate);
+        return eventDate < today;
+    }, [event?.eventDate]);
+
+    // Si el evento está finalizado, mostrar galería por defecto
+    useEffect(() => {
+        if (isEventFinished && activeTab === 'upload') {
+            setActiveTab('gallery');
+        }
+    }, [isEventFinished, activeTab]);
 
     // Obtener detalles del evento
     useEffect(() => {
@@ -75,11 +91,22 @@ export default function GuestEventPage() {
                 <div className="text-center mb-xl slide-up">
                     <span style={{ fontSize: '3rem' }}>📸</span>
                     <h1 className="mt-lg">{event.name}</h1>
-                    <p className="text-muted">¡Compartí tus fotos con todos!</p>
-                    {connected && (
-                        <span className="badge badge-success mt-lg" style={{ display: 'inline-flex' }}>
-                            ● En Vivo
-                        </span>
+                    {isEventFinished ? (
+                        <>
+                            <span className="badge badge-secondary mt-lg" style={{ display: 'inline-flex' }}>
+                                ✓ Evento Finalizado
+                            </span>
+                            <p className="text-muted mt-md">Este evento ya pasó. Podés ver las fotos en la galería.</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-muted">¡Compartí tus fotos con todos!</p>
+                            {connected && (
+                                <span className="badge badge-success mt-lg" style={{ display: 'inline-flex' }}>
+                                    ● En Vivo
+                                </span>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -90,12 +117,14 @@ export default function GuestEventPage() {
                     gap: 'var(--space-md)',
                     marginBottom: 'var(--space-xl)'
                 }}>
-                    <button
-                        onClick={() => setActiveTab('upload')}
-                        className={`btn ${activeTab === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
-                    >
-                        📷 Subir
-                    </button>
+                    {!isEventFinished && (
+                        <button
+                            onClick={() => setActiveTab('upload')}
+                            className={`btn ${activeTab === 'upload' ? 'btn-primary' : 'btn-secondary'}`}
+                        >
+                            📷 Subir
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab('gallery')}
                         className={`btn ${activeTab === 'gallery' ? 'btn-primary' : 'btn-secondary'}`}
@@ -105,7 +134,7 @@ export default function GuestEventPage() {
                 </div>
 
                 {/* Contenido */}
-                {activeTab === 'upload' ? (
+                {activeTab === 'upload' && !isEventFinished ? (
                     <div style={{ maxWidth: '500px', margin: '0 auto' }}>
                         <PhotoUpload
                             eventSlug={slug}
