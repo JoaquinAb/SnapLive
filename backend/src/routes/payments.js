@@ -178,7 +178,7 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
                 }
             ],
             back_urls: {
-                success: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+                success: `${process.env.FRONTEND_URL}/dashboard/events/new?payment=success`,
                 failure: `${process.env.FRONTEND_URL}/dashboard?payment=failed`,
                 pending: `${process.env.FRONTEND_URL}/dashboard?payment=pending`
             },
