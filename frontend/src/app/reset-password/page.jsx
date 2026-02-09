@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '../../lib/api';
@@ -7,7 +7,8 @@ import { api } from '../../lib/api';
 /**
  * Página para Restablecer Contraseña
  */
-export default function ResetPasswordPage() {
+// Componente interno con la lógica que usa useSearchParams
+function ResetPasswordContent() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -137,5 +138,13 @@ export default function ResetPasswordPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={<div className="flex-center" style={{ minHeight: '100vh' }}><div className="spinner"></div></div>}>
+            <ResetPasswordContent />
+        </Suspense>
     );
 }

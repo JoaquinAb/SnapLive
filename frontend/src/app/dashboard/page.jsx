@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,7 +12,8 @@ import PhotoGallery from '../../components/PhotoGallery';
  * Panel principal del cliente con soporte para múltiples eventos
  * Cada evento requiere un pago separado
  */
-export default function DashboardPage() {
+// Componente interno con la lógica que usa useSearchParams
+function DashboardContent() {
     const { user, loading: authLoading, isAuthenticated } = useAuth();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -493,5 +494,13 @@ export default function DashboardPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={<div className="flex-center" style={{ minHeight: 'calc(100vh - 70px)' }}><div className="spinner"></div></div>}>
+            <DashboardContent />
+        </Suspense>
     );
 }
