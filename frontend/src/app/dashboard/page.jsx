@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
+
+export const dynamic = 'force-dynamic';
+
 import QRDownload from '../../components/QRDownload';
 import PhotoGallery from '../../components/PhotoGallery';
 
