@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../../hooks/useAuth';
 import { api } from '../../../../lib/api';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Contenido del formulario de creación de evento
  */
