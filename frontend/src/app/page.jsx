@@ -29,7 +29,7 @@ export default function HomePage() {
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'
                         }}>
-                            Capturá Cada Momento<br />Compartilo al Instante
+                            Capturá cada momento.<br />Compartilo al instante.
                         </h1>
                         <p style={{
                             fontSize: '1.25rem',
@@ -78,7 +78,7 @@ export default function HomePage() {
                         }}></div>
 
                         <h3 className="mb-md" style={{ fontSize: '1.25rem', color: 'var(--color-text-secondary)' }}>
-                            Pase Único por Evento
+                            Pase único por evento
                         </h3>
                         <div style={{
                             fontSize: '3.5rem',
