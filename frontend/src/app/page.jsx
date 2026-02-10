@@ -50,6 +50,68 @@ export default function HomePage() {
                 </div>
             </section>
 
+            {/* Pricing Section - Quick View */}
+            <section style={{
+                padding: '0 0 var(--space-3xl)',
+                marginTop: '-var(--space-2xl)', // Overlap slightly or just pull up
+                position: 'relative',
+                zIndex: 10
+            }}>
+                <div className="container">
+                    <div className="card fade-in" style={{
+                        maxWidth: '500px',
+                        margin: '0 auto',
+                        textAlign: 'center',
+                        background: 'rgba(20, 20, 25, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+                    }}>
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '4px',
+                            background: 'var(--gradient-primary)',
+                            borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0'
+                        }}></div>
+
+                        <h3 className="mb-md" style={{ fontSize: '1.25rem', color: 'var(--color-text-secondary)' }}>
+                            Pase Único por Evento
+                        </h3>
+                        <div style={{
+                            fontSize: '3.5rem',
+                            fontWeight: '800',
+                            lineHeight: 1,
+                            marginBottom: 'var(--space-md)',
+                            background: 'var(--gradient-primary)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                        }}>
+                            $4.999
+                        </div>
+                        <p className="text-muted mb-lg" style={{ fontSize: '0.9rem' }}>
+                            Sin suscripciones. Sin costos ocultos.
+                        </p>
+
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: 'var(--space-md)',
+                            flexWrap: 'wrap',
+                            fontSize: '0.9rem',
+                            color: 'var(--color-text-secondary)'
+                        }}>
+                            <span>✅ Fotos Ilimitadas</span>
+                            <span>✅ Invitados Ilimitados</span>
+                            <span>✅ Descarga Incluida</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Features Section */}
             <section style={{ padding: 'var(--space-3xl) 0' }}>
                 <div className="container">

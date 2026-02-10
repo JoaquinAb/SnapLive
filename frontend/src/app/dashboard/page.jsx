@@ -262,6 +262,20 @@ function DashboardContent() {
                                     Cada evento requiere un pago único. Sin suscripciones, sin cargos mensuales.
                                 </p>
 
+                                <div className="mb-xl">
+                                    <span style={{
+                                        fontSize: '2.5rem',
+                                        fontWeight: 'bold',
+                                        background: 'var(--gradient-primary)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        backgroundClip: 'text'
+                                    }}>
+                                        $4.999
+                                    </span>
+                                    <span className="text-muted ml-sm">/ evento</span>
+                                </div>
+
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -467,8 +481,22 @@ function DashboardContent() {
                         <h2 className="mt-lg mb-md">Activá tu Primer Evento</h2>
                         <p className="text-muted mb-xl" style={{ maxWidth: '400px', margin: '0 auto var(--space-xl)' }}>
                             Pagá una sola vez por evento y obtené subidas ilimitadas de fotos.
-                            Sin suscripciones, sin cargos ocultos.
+                            Sin suscripciones, sin cargos mensuales.
                         </p>
+
+                        <div className="mb-xl">
+                            <span style={{
+                                fontSize: '2.5rem',
+                                fontWeight: 'bold',
+                                background: 'var(--gradient-primary)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text'
+                            }}>
+                                $4.999
+                            </span>
+                            <span className="text-muted ml-sm">/ evento</span>
+                        </div>
 
                         <div style={{
                             display: 'flex',
