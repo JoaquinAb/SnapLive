@@ -16,8 +16,20 @@ class WebSocketService {
     init(httpServer) {
         this.io = new Server(httpServer, {
             cors: {
-                origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-                methods: ['GET', 'POST']
+                origin: (origin, callback) => {
+                    const allowedOrigins = [
+                        process.env.FRONTEND_URL,
+                        'http://localhost:3000'
+                    ];
+
+                    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+                        callback(null, true);
+                    } else {
+                        callback(new Error('Not allowed by CORS'));
+                    }
+                },
+                methods: ['GET', 'POST'],
+                credentials: true
             }
         });
 
