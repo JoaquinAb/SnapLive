@@ -13,6 +13,11 @@ class QRService {
      * @returns {Promise<string>} - Cloudinary URL
      */
     static async generateAndUpload(eventSlug, frontendUrl = process.env.FRONTEND_URL) {
+        // Ensure URL has protocol
+        if (frontendUrl && !frontendUrl.startsWith('http')) {
+            frontendUrl = `https://${frontendUrl}`;
+        }
+
         const eventUrl = `${frontendUrl}/event/${eventSlug}`;
 
         // Generate QR code as buffer
@@ -51,6 +56,11 @@ class QRService {
      * @returns {Promise<string>} - Base64 data URL
      */
     static async generateBase64(eventSlug, frontendUrl = process.env.FRONTEND_URL) {
+        // Ensure URL has protocol
+        if (frontendUrl && !frontendUrl.startsWith('http')) {
+            frontendUrl = `https://${frontendUrl}`;
+        }
+
         const eventUrl = `${frontendUrl}/event/${eventSlug}`;
 
         return QRCode.toDataURL(eventUrl, {
