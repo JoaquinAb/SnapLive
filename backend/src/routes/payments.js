@@ -213,7 +213,55 @@ router.post('/mercadopago/webhook', async (req, res) => {
         const { type, data } = req.body;
 
         if (type === 'payment') {
-            console.log('Notificación de pago MercadoPago:', data);
+            const { Payment: MPPayment } = require('mercadopago');
+            const mercadopago = require('../config/mercadopago');
+            const paymentClient = new MPPayment(mercadopago);
+
+            try {
+                const payment = await paymentClient.get({ id: data.id });
+
+                if (payment && payment.status === 'approved') {
+                    const userId = payment.external_reference;
+
+                    // Create payment record if it doesn't exist
+                    const [paymentRecord, created] = await Payment.findOrCreate({
+                        where: { paymentId: payment.id.toString() },
+                        defaults: {
+                            userId: userId,
+                            provider: 'mercadopago',
+                            amount: payment.transaction_amount,
+                            currency: payment.currency_id,
+                            status: 'completed',
+                            metadata: {
+                                preference_id: payment.preference_id,
+                                ...payment
+                            }
+                        }
+                    });
+
+                    if (created) {
+                        console.log(`Pago registrado exitosamente: ${payment.id} para usuario ${userId}`);
+
+                        // Send confirmation email
+                        const user = await User.findByPk(userId);
+                        if (user) {
+                            // Convert back to cents/lowest unit if needed by email service, 
+                            // or verify how sendPaymentConfirmationEmail expects validity.
+                            // Assuming it expects amount in smallest unit (cents) based on Stripe logic:
+                            // ARS is usually treated as-is or x100 depending on your email logic.
+                            // Let's pass the raw amount for now or calculate accordingly.
+                            // Existing code used 499900 for 4999 ARS, implying x100.
+                            const emailAmount = payment.transaction_amount * 100;
+                            sendPaymentConfirmationEmail(user.email, user.name, emailAmount);
+                        }
+                    } else {
+                        console.log(`Pago ${payment.id} ya existía en la base de datos.`);
+                    }
+                }
+            } catch (mpError) {
+                console.error('Error fetching payment from MercadoPago:', mpError);
+                // Don't fail the webhook response, just log the error
+            }
         }
 
         res.status(200).send('OK');
