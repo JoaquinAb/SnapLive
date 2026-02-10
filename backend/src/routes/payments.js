@@ -288,9 +288,14 @@ router.get('/status', auth, async (req, res) => {
 
         // Now both demo and production require a pending payment
         // In demo mode, we just simulate the payment quickly
+        // Check if user is admin
+        const user = await User.findByPk(req.userId);
+        const isAdmin = user && user.role === 'admin';
+
         res.json({
-            canCreateEvent: !!payment,
+            canCreateEvent: !!payment || isAdmin,
             demoMode: DEMO_MODE,
+            isAdmin: isAdmin,
             payment: payment ? {
                 id: payment.id,
                 provider: payment.provider,

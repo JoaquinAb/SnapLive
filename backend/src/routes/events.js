@@ -33,10 +33,18 @@ router.post('/', auth, async (req, res) => {
         });
 
         if (!payment) {
-            return res.status(402).json({
-                error: 'Pago requerido. Completá el pago antes de crear un evento.',
-                requiresPayment: true
-            });
+            // Check if user is admin - admins can create free events
+            const { User } = require('../models');
+            const user = await User.findByPk(req.userId);
+
+            if (user && user.role === 'admin') {
+                console.log(`Admin user ${req.userId} creating event without payment`);
+            } else {
+                return res.status(402).json({
+                    error: 'Pago requerido. Completá el pago antes de crear un evento.',
+                    requiresPayment: true
+                });
+            }
         }
 
         // Create event

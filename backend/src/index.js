@@ -30,7 +30,7 @@ app.use(helmet({
 // Rate limiting - general
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
+    max: 1000, // 1000 requests per window (increased from 100)
     message: { error: 'Demasiadas solicitudes. Intentá de nuevo en unos minutos.' }
 });
 
