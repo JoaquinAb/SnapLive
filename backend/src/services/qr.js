@@ -13,12 +13,24 @@ class QRService {
      * @returns {Promise<string>} - Cloudinary URL
      */
     static async generateAndUpload(eventSlug, frontendUrl = process.env.FRONTEND_URL) {
+        // Fallback if env var is missing
+        if (!frontendUrl) {
+            console.warn('QRService: FRONTEND_URL not set, using default.');
+            frontendUrl = 'https://snaplive.vercel.app';
+        }
+
         // Ensure URL has protocol
-        if (frontendUrl && !frontendUrl.startsWith('http')) {
+        if (!frontendUrl.startsWith('http')) {
             frontendUrl = `https://${frontendUrl}`;
         }
 
+        // Remove trailing slash if present
+        if (frontendUrl.endsWith('/')) {
+            frontendUrl = frontendUrl.slice(0, -1);
+        }
+
         const eventUrl = `${frontendUrl}/event/${eventSlug}`;
+        console.log(`[QR Service] Generating QR for URL: ${eventUrl}`);
 
         // Generate QR code as buffer
         const qrBuffer = await QRCode.toBuffer(eventUrl, {
@@ -56,12 +68,23 @@ class QRService {
      * @returns {Promise<string>} - Base64 data URL
      */
     static async generateBase64(eventSlug, frontendUrl = process.env.FRONTEND_URL) {
+        // Fallback if env var is missing
+        if (!frontendUrl) {
+            frontendUrl = 'https://snaplive.vercel.app';
+        }
+
         // Ensure URL has protocol
-        if (frontendUrl && !frontendUrl.startsWith('http')) {
+        if (!frontendUrl.startsWith('http')) {
             frontendUrl = `https://${frontendUrl}`;
         }
 
+        // Remove trailing slash if present
+        if (frontendUrl.endsWith('/')) {
+            frontendUrl = frontendUrl.slice(0, -1);
+        }
+
         const eventUrl = `${frontendUrl}/event/${eventSlug}`;
+        console.log(`[QR Service] Generating Base64 QR for URL: ${eventUrl}`);
 
         return QRCode.toDataURL(eventUrl, {
             type: 'image/png',
