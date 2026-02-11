@@ -107,6 +107,45 @@ export const api = {
     // Admin
     getAdminStats: () => request('/admin/stats'),
     getAdminUsers: () => request('/admin/users'),
+
+    // Downloads
+    downloadEventPhotos: (slug) => downloadFile(`/events/${slug}/download-all`),
 };
+
+/**
+ * Make API request for file download
+ * @param {string} endpoint - API endpoint
+ * @returns {Promise<Blob>} - File blob
+ */
+async function downloadFile(endpoint) {
+    const token = getToken();
+    const config = {
+        headers: {}
+    };
+
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, config);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.error || 'Error al descargar el archivo');
+            } catch (e) {
+                throw new Error('Error al descargar el archivo');
+            }
+        }
+
+        return await response.blob();
+    } catch (error) {
+        console.error('Download Request Error:', error);
+        throw error;
+    }
+}
+
 
 export default api;

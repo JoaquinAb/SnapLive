@@ -99,24 +99,66 @@ export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false 
                         cursor: 'pointer'
                     }}
                 >
-                    <button
-                        onClick={() => setSelectedPhoto(null)}
-                        style={{
-                            position: 'absolute',
-                            top: 'var(--space-lg)',
-                            right: 'var(--space-lg)',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: 'none',
-                            color: 'white',
-                            fontSize: '2rem',
-                            cursor: 'pointer',
-                            padding: 'var(--space-sm) var(--space-md)',
-                            borderRadius: 'var(--radius-md)',
-                            zIndex: 10
-                        }}
-                    >
-                        ✕
-                    </button>
+                    <div style={{
+                        position: 'absolute',
+                        top: 'var(--space-lg)',
+                        right: 'var(--space-lg)',
+                        display: 'flex',
+                        gap: 'var(--space-md)',
+                        zIndex: 10
+                    }}>
+                        {/* Download Button */}
+                        {canDelete && (
+                            <button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                        const response = await fetch(selectedPhoto.url);
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `snaplive-${selectedPhoto.id}.jpg`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                    } catch (err) {
+                                        console.error('Error downloading photo:', err);
+                                        alert('Error al descargar la foto');
+                                    }
+                                }}
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: 'none',
+                                    color: 'white',
+                                    fontSize: '1.5rem',
+                                    cursor: 'pointer',
+                                    padding: 'var(--space-sm) var(--space-md)',
+                                    borderRadius: 'var(--radius-md)',
+                                }}
+                                title="Descargar"
+                            >
+                                📥
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => setSelectedPhoto(null)}
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                border: 'none',
+                                color: 'white',
+                                fontSize: '2rem',
+                                cursor: 'pointer',
+                                padding: 'var(--space-sm) var(--space-md)',
+                                borderRadius: 'var(--radius-md)',
+                                lineHeight: '1'
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
 
                     {/* Botón Anterior */}
                     {hasPrev && (

@@ -429,6 +429,32 @@ function DashboardContent() {
                                                     >
                                                         📺 Abrir Modo Pantalla
                                                     </Link>
+
+                                                    <button
+                                                        onClick={async () => {
+                                                            try {
+                                                                setLoading(true); // Reuse loading state or add specific one
+                                                                const blob = await api.downloadEventPhotos(event.slug);
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                const a = document.createElement('a');
+                                                                a.href = url;
+                                                                a.download = `snaplive-${event.slug}.zip`;
+                                                                document.body.appendChild(a);
+                                                                a.click();
+                                                                window.URL.revokeObjectURL(url);
+                                                                document.body.removeChild(a);
+                                                                setSuccessMessage('Descarga iniciada exitosamente');
+                                                            } catch (err) {
+                                                                setError(err.message);
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        }}
+                                                        className="btn btn-secondary"
+                                                    >
+                                                        📥 Descargar Todo (.zip)
+                                                    </button>
+
                                                     <button
                                                         onClick={() => handleEditEvent(event)}
                                                         className="btn btn-secondary"
