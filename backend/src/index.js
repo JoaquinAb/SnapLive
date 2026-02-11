@@ -14,6 +14,7 @@ const eventRoutes = require('./routes/events');
 const photoRoutes = require('./routes/photos');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
+const debugRoutes = require('./routes/debug');
 
 const app = express();
 const server = http.createServer(app);
@@ -106,6 +107,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/debug', debugRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
