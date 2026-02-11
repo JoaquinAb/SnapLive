@@ -18,6 +18,10 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const server = http.createServer(app);
 
+// Trust the first proxy (Railway/Nginx)
+// This is required for rate-limiting to work behind a proxy
+app.set('trust proxy', true); // Trust all proxies (required for Railway/Vercel)
+
 // Initialize WebSocket
 wsService.init(server);
 
@@ -31,6 +35,8 @@ app.use(helmet({
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // 1000 requests per window (increased from 100)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: { error: 'Demasiadas solicitudes. Intentá de nuevo en unos minutos.' }
 });
 
@@ -38,6 +44,8 @@ const generalLimiter = rateLimit({
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10, // 10 attempts per window
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: { error: 'Demasiados intentos de inicio de sesión. Intentá de nuevo en 15 minutos.' }
 });
 
