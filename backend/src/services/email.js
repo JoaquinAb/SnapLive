@@ -27,8 +27,9 @@ const createTransporter = () => {
         },
         tls: {
             ciphers: 'SSLv3',
-            rejectUnauthorized: false // Helps with some self-signed certs or strict proxies
-        }
+            rejectUnauthorized: false
+        },
+        debug: true // Enable debug logs in production to trace issues
     });
 };
 
