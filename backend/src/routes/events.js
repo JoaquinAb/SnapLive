@@ -93,7 +93,8 @@ router.get('/:slug/download-all', auth, async (req, res) => {
 });
 
 // Demo mode - allows testing without real payments
-const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
+// Demo mode - allows testing without real payments
+// const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
 
 /**
  * POST /api/events
