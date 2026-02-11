@@ -35,6 +35,7 @@ class ImageService {
     static async uploadPhoto(buffer, eventId) {
         // Optimize image with Sharp
         const optimizedBuffer = await sharp(buffer)
+            .rotate() // Auto-rotate based on EXIF
             .resize(1920, 1920, {
                 fit: 'inside',
                 withoutEnlargement: true
@@ -44,6 +45,7 @@ class ImageService {
 
         // Create thumbnail
         const thumbnailBuffer = await sharp(buffer)
+            .rotate() // Auto-rotate based on EXIF
             .resize(400, 400, {
                 fit: 'cover'
             })
