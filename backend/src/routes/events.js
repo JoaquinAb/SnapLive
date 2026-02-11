@@ -2,8 +2,95 @@ const express = require('express');
 const { Event, Photo, Payment } = require('../models');
 const { auth, optionalAuth } = require('../middleware/auth');
 const QRService = require('../services/qr');
+const archiver = require('archiver');
+const axios = require('axios');
 
 const router = express.Router();
+
+// Demo mode - allows testing without real payments
+const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
+
+/**
+ * GET /api/events/:slug/download-all
+ * Download all photos as ZIP (Owner only)
+ */
+router.get('/:slug/download-all', auth, async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const event = await Event.findOne({
+            where: { slug }
+        });
+
+        if (!event) {
+            return res.status(404).json({ error: 'Evento no encontrado' });
+        }
+
+        // Verify ownership
+        if (event.userId !== req.userId) {
+            return res.status(403).json({
+                error: 'Solo el dueño del evento puede descargar todas las fotos'
+            });
+        }
+
+        // Get all photos
+        const photos = await Photo.findAll({
+            where: { eventId: event.id }
+        });
+
+        if (photos.length === 0) {
+            return res.status(400).json({ error: 'No hay fotos para descargar' });
+        }
+
+        // Set headers for download
+        const fileName = `snaplive-${slug}-${Date.now()}.zip`;
+        res.attachment(fileName);
+
+        // Create zip archive
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Compression level
+        });
+
+        // Pipe archive to response
+        archive.pipe(res);
+
+        // Error handling
+        archive.on('error', (err) => {
+            console.error('Archiver error:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Error al generar ZIP' });
+            }
+        });
+
+        // Add photos to zip
+        for (const photo of photos) {
+            try {
+                // Fetch image stream
+                const response = await axios({
+                    url: photo.url,
+                    method: 'GET',
+                    responseType: 'stream'
+                });
+
+                // Add to archive
+                const photoName = `photo-${photo.id}.jpg`;
+                archive.append(response.data, { name: photoName });
+            } catch (downloadError) {
+                console.error(`Error downloading photo ${photo.id}:`, downloadError.message);
+                // Continue with other photos even if one fails
+            }
+        }
+
+        // Finalize archive
+        await archive.finalize();
+
+    } catch (error) {
+        console.error('Download all error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Error al generar el archivo ZIP' });
+        }
+    }
+});
 
 // Demo mode - allows testing without real payments
 const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
