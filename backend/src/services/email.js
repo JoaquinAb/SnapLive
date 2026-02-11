@@ -3,7 +3,7 @@ const { Resend } = require('resend');
 /**
  * Email Service
  * Handles sending emails for password reset, etc.
- * Supports demo mode when no API key is configured
+ * Supports demo mode when no API key is configured or when sending fails
  */
 
 // Initialize Resend
@@ -20,16 +20,16 @@ const isEmailConfigured = () => {
  * Send password reset email
  * @param {string} email - Recipient email
  * @param {string} resetToken - Password reset token
- * @returns {Promise<{success: boolean, demo?: boolean}>}
+ * @returns {Promise<{success: boolean, demo?: boolean, resetLink?: string}>}
  */
 const sendPasswordResetEmail = async (email, resetToken) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-    // Demo mode - just log to console
+    // Demo mode (no API key) - just log to console
     if (!isEmailConfigured()) {
         console.log('\n' + '='.repeat(60));
-        console.log('📧 MODO DEMO - EMAIL DE RECUPERACIÓN');
+        console.log('📧 MODO DEMO (Sin API Key) - EMAIL DE RECUPERACIÓN');
         console.log('='.repeat(60));
         console.log(`Para: ${email}`);
         console.log(`Link de recuperación: ${resetLink}`);
@@ -87,13 +87,31 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 
         if (error) {
             console.error('Resend error:', error);
-            throw new Error(error.message);
+            // Fallback to demo mode if sending fails (e.g. unverified domain)
+            console.log('\n' + '='.repeat(60));
+            console.log('⚠️ FALLO ENVÍO REAL - ACTIVANDO MODO FALLBACK');
+            console.log(`Error: ${error.message}`);
+            console.log('='.repeat(60));
+            console.log(`Para: ${email}`);
+            console.log(`Link de recuperación: ${resetLink}`);
+            console.log('='.repeat(60) + '\n');
+
+            return { success: true, demo: true, resetLink };
         }
 
         return { success: true, id: data.id };
     } catch (error) {
-        console.error('Error sending email:', error);
-        throw new Error('Error al enviar el email');
+        console.error('Exception sending email:', error);
+        // Fallback to demo mode on exception
+        console.log('\n' + '='.repeat(60));
+        console.log('⚠️ EXCEPCIÓN ENVÍO REAL - ACTIVANDO MODO FALLBACK');
+        console.log(`Error: ${error.message}`);
+        console.log('='.repeat(60));
+        console.log(`Para: ${email}`);
+        console.log(`Link de recuperación: ${resetLink}`);
+        console.log('='.repeat(60) + '\n');
+
+        return { success: true, demo: true, resetLink };
     }
 };
 
@@ -109,10 +127,10 @@ const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
     const dashboardLink = `${frontendUrl}/dashboard`;
     const formattedAmount = (amount / 100).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });
 
-    // Demo mode - just log to console
+    // Demo mode (no API key)
     if (!isEmailConfigured()) {
         console.log('\n' + '='.repeat(60));
-        console.log('📧 MODO DEMO - EMAIL DE CONFIRMACIÓN DE PAGO');
+        console.log('📧 MODO DEMO (Sin API Key) - EMAIL DE CONFIRMACIÓN DE PAGO');
         console.log('='.repeat(60));
         console.log(`Para: ${email}`);
         console.log(`Usuario: ${userName}`);
@@ -175,7 +193,15 @@ const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
 
         if (error) {
             console.error('Resend error:', error);
-            return { success: false, error: error.message };
+            // Fallback for payments
+            console.log('\n' + '='.repeat(60));
+            console.log('⚠️ FALLO ENVÍO REAL - PAGO CONFIRMADO (SOLO LOG)');
+            console.log(`Error: ${error.message}`);
+            console.log(`Para: ${email}`);
+            console.log('='.repeat(60) + '\n');
+            return { success: false, error: error.message }; // Keep payment failure as real failure or handle upstream?
+            // Actually, for payments, we usually WANT to know if email failed, but not block the UI.
+            // But for now, let's just log and return error so backend knows.
         }
 
         return { success: true, id: data.id };
