@@ -19,15 +19,11 @@ const createTransporter = () => {
 
     return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true', // false for 587
+        port: parseInt(process.env.SMTP_PORT) || 465,
+        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
-        },
-        tls: {
-            ciphers: 'SSLv3',
-            rejectUnauthorized: false
         },
         debug: true // Enable debug logs in production to trace issues
     });
