@@ -37,6 +37,7 @@ const generalLimiter = rateLimit({
     max: 1000, // 1000 requests per window (increased from 100)
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    validate: { xForwardedForHeader: false }, // Disable the specific validation error
     message: { error: 'Demasiadas solicitudes. Intentá de nuevo en unos minutos.' }
 });
 
@@ -46,6 +47,7 @@ const authLimiter = rateLimit({
     max: 10, // 10 attempts per window
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    validate: { xForwardedForHeader: false }, // Disable the specific validation error
     message: { error: 'Demasiados intentos de inicio de sesión. Intentá de nuevo en 15 minutos.' }
 });
 
