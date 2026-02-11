@@ -142,6 +142,7 @@ router.get('/me', auth, async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
+        console.log(`[AUTH] Forgot password request for: ${email}`);
 
         if (!email) {
             return res.status(400).json({
@@ -171,7 +172,9 @@ router.post('/forgot-password', async (req, res) => {
         });
 
         // Send email
+        console.log(`[AUTH] Sending password reset email to: ${email}`);
         const result = await sendPasswordResetEmail(email, resetRecord.token);
+        console.log(`[AUTH] Email sent result:`, result);
 
         res.json({
             message: 'Si el email existe, recibirás un link para restablecer tu contraseña',
@@ -179,8 +182,12 @@ router.post('/forgot-password', async (req, res) => {
             resetLink: result.demo ? result.resetLink : undefined
         });
     } catch (error) {
-        console.error('Forgot password error:', error);
-        res.status(500).json({ error: 'Error al procesar la solicitud' });
+        console.error('[AUTH] Forgot password error:', error);
+        // Include error message in response for debugging (remove in prod if sensitive)
+        res.status(500).json({
+            error: 'Error al procesar la solicitud',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
