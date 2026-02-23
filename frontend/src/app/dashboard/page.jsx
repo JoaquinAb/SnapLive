@@ -186,7 +186,9 @@ function DashboardContent() {
 
     // Formatear fecha
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('es-AR', {
+        // Append T12:00:00 to DATEONLY strings to avoid timezone shift to previous day
+        const safeDate = typeof dateString === 'string' && !dateString.includes('T') ? dateString + 'T12:00:00' : dateString;
+        return new Date(safeDate).toLocaleDateString('es-AR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
@@ -368,7 +370,7 @@ function DashboardContent() {
                                             {(() => {
                                                 const today = new Date();
                                                 today.setHours(0, 0, 0, 0);
-                                                const eventDate = new Date(event.eventDate);
+                                                const eventDate = new Date(event.eventDate + 'T12:00:00');
                                                 const isFinished = eventDate < today;
 
                                                 if (isFinished) {

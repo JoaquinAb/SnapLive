@@ -26,7 +26,7 @@ export default function GuestEventPage() {
         if (!event?.eventDate) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const eventDate = new Date(event.eventDate);
+        const eventDate = new Date(event.eventDate + 'T12:00:00');
         return eventDate < today;
     }, [event?.eventDate]);
 

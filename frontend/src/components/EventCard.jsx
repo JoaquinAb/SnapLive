@@ -24,7 +24,9 @@ export default function EventCard({ event }) {
     };
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('es-AR', {
+        // Append T12:00:00 to DATEONLY strings to avoid timezone shift to previous day
+        const safeDate = typeof date === 'string' && !date.includes('T') ? date + 'T12:00:00' : date;
+        return new Date(safeDate).toLocaleDateString('es-AR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
