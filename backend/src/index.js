@@ -7,6 +7,7 @@ const http = require('http');
 const path = require('path');
 const { sequelize } = require('./models');
 const wsService = require('./services/websocket');
+const { runCleanupCycle } = require('./services/cleanup');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -143,15 +144,25 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log('✅ Database connected');
 
-        // Sync models (disable alter to avoid constraint conflicts)
-        // The userId unique constraint was removed, but we won't alter existing table
-        await sequelize.sync();
+        // Sync models (alter: true to add new columns like cleanup fields)
+        await sequelize.sync({ alter: true });
         console.log('✅ Database synchronized');
 
         // Start server
         server.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
             console.log(`📡 WebSocket ready`);
+            console.log(`🧹 Auto-cleanup: fotos se eliminan 60 días después del evento`);
+
+            // Run cleanup once on startup (after a short delay)
+            setTimeout(() => {
+                runCleanupCycle().catch(err => console.error('Cleanup error:', err));
+            }, 10000); // 10 seconds after startup
+
+            // Run cleanup every 24 hours
+            setInterval(() => {
+                runCleanupCycle().catch(err => console.error('Cleanup error:', err));
+            }, 24 * 60 * 60 * 1000);
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);

@@ -54,6 +54,20 @@ const Event = sequelize.define('Event', {
         type: DataTypes.STRING,
         allowNull: true
     },
+    // Cleanup tracking fields
+    photosCleanedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
+    expirationWarning7d: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    expirationWarning1d: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW

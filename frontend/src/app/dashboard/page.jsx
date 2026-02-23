@@ -398,6 +398,84 @@ function DashboardContent() {
                                     </span>
                                 </div>
 
+                                {/* Banner de expiración de fotos */}
+                                {(() => {
+                                    // Si ya se limpiaron las fotos
+                                    if (event.photosCleanedAt) {
+                                        return (
+                                            <div style={{
+                                                background: 'rgba(107, 114, 128, 0.15)',
+                                                border: '1px solid rgba(107, 114, 128, 0.3)',
+                                                borderRadius: 'var(--radius-md)',
+                                                padding: 'var(--space-sm) var(--space-md)',
+                                                marginTop: 'var(--space-sm)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 'var(--space-sm)',
+                                                fontSize: '0.85rem'
+                                            }}>
+                                                📦 <span>Fotos eliminadas automáticamente</span>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Calcular días restantes
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const evDate = new Date(event.eventDate + 'T12:00:00');
+                                    const expirationDate = new Date(evDate);
+                                    expirationDate.setDate(expirationDate.getDate() + 60);
+                                    const diffMs = expirationDate - today;
+                                    const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                                    // Solo mostrar si quedan 30 días o menos
+                                    if (daysRemaining > 30 || daysRemaining < 0) return null;
+
+                                    const isUrgent = daysRemaining <= 1;
+                                    const isWarning = daysRemaining <= 7;
+                                    const bgColor = isUrgent
+                                        ? 'rgba(239, 68, 68, 0.15)'
+                                        : isWarning
+                                            ? 'rgba(245, 158, 11, 0.15)'
+                                            : 'rgba(234, 179, 8, 0.1)';
+                                    const borderColor = isUrgent
+                                        ? 'rgba(239, 68, 68, 0.4)'
+                                        : isWarning
+                                            ? 'rgba(245, 158, 11, 0.4)'
+                                            : 'rgba(234, 179, 8, 0.3)';
+
+                                    return (
+                                        <div style={{
+                                            background: bgColor,
+                                            border: `1px solid ${borderColor}`,
+                                            borderRadius: 'var(--radius-md)',
+                                            padding: 'var(--space-sm) var(--space-md)',
+                                            marginTop: 'var(--space-sm)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            fontSize: '0.85rem',
+                                            flexWrap: 'wrap',
+                                            gap: 'var(--space-sm)'
+                                        }}>
+                                            <span>
+                                                {isUrgent ? '🚨' : '⚠️'} Las fotos se eliminan en <strong>{daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}</strong>
+                                            </span>
+                                            <Link
+                                                href={`/event/${event.slug}`}
+                                                style={{
+                                                    color: 'var(--color-primary)',
+                                                    fontWeight: 'bold',
+                                                    textDecoration: 'underline',
+                                                    fontSize: '0.85rem'
+                                                }}
+                                            >
+                                                📥 Descargar
+                                            </Link>
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Contenido expandible */}
                                 {expandedEvent === event.id && (
                                     <div style={{

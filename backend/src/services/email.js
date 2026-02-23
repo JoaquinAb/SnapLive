@@ -211,8 +211,166 @@ const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
     }
 };
 
+/**
+ * Send photo expiration warning email
+ * @param {string} email - Recipient email
+ * @param {string} userName - User's name
+ * @param {string} eventName - Event name
+ * @param {number} daysLeft - Days until photos are deleted
+ * @param {string} downloadLink - Link to download photos
+ */
+const sendExpirationWarningEmail = async (email, userName, eventName, daysLeft, downloadLink) => {
+    const isUrgent = daysLeft <= 1;
+    const subject = isUrgent
+        ? `🚨 ¡ÚLTIMO DÍA! Tus fotos de "${eventName}" se eliminan mañana`
+        : `⚠️ Tus fotos de "${eventName}" se eliminan en ${daysLeft} días`;
+
+    if (!isEmailConfigured()) {
+        console.log('\n' + '='.repeat(60));
+        console.log(`📧 MODO DEMO - AVISO DE EXPIRACIÓN (${daysLeft} días)`);
+        console.log('='.repeat(60));
+        console.log(`Para: ${email}`);
+        console.log(`Evento: ${eventName}`);
+        console.log(`Días restantes: ${daysLeft}`);
+        console.log(`Link: ${downloadLink}`);
+        console.log('='.repeat(60) + '\n');
+        return { success: true, demo: true };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'SnapLive <onboarding@resend.dev>',
+            to: [email],
+            subject,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #7c3aed;">📸 SnapLive</h1>
+                    </div>
+                    
+                    <div style="background: ${isUrgent ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #f59e0b, #d97706)'}; color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+                        <span style="font-size: 48px;">${isUrgent ? '🚨' : '⚠️'}</span>
+                        <h2 style="margin: 15px 0 5px 0;">
+                            ${isUrgent ? '¡Último día para descargar tus fotos!' : `Tus fotos se eliminan en ${daysLeft} días`}
+                        </h2>
+                        <p style="margin: 0; opacity: 0.9;">Evento: ${eventName}</p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 18px;">
+                        Hola <strong>${userName}</strong>,
+                    </p>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Te recordamos que las fotos de tu evento <strong>"${eventName}"</strong> se eliminarán automáticamente en <strong>${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}</strong> para liberar espacio de almacenamiento.
+                    </p>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Si todavía no descargaste tus fotos, <strong>hacelo ahora</strong> antes de que sean eliminadas permanentemente.
+                    </p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${downloadLink}" 
+                           style="background: linear-gradient(135deg, #7c3aed, #a855f7); 
+                                  color: white; 
+                                  padding: 15px 30px; 
+                                  text-decoration: none; 
+                                  border-radius: 8px; 
+                                  font-size: 16px;
+                                  display: inline-block;">
+                            📥 Descargar Mis Fotos
+                        </a>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                    
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        © SnapLive - Compartí los mejores momentos
+                    </p>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('Resend error (expiration warning):', error);
+            return { success: false, error: error.message };
+        }
+        return { success: true, id: data.id };
+    } catch (error) {
+        console.error('Error sending expiration warning email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
+ * Send photos deleted confirmation email
+ * @param {string} email - Recipient email
+ * @param {string} userName - User's name
+ * @param {string} eventName - Event name
+ */
+const sendPhotosDeletedEmail = async (email, userName, eventName) => {
+    if (!isEmailConfigured()) {
+        console.log('\n' + '='.repeat(60));
+        console.log('📧 MODO DEMO - FOTOS ELIMINADAS');
+        console.log('='.repeat(60));
+        console.log(`Para: ${email}`);
+        console.log(`Evento: ${eventName}`);
+        console.log('='.repeat(60) + '\n');
+        return { success: true, demo: true };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'SnapLive <onboarding@resend.dev>',
+            to: [email],
+            subject: `📦 Fotos de "${eventName}" eliminadas - SnapLive`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #7c3aed;">📸 SnapLive</h1>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+                        <span style="font-size: 48px;">📦</span>
+                        <h2 style="margin: 15px 0 5px 0;">Fotos eliminadas</h2>
+                        <p style="margin: 0; opacity: 0.9;">Evento: ${eventName}</p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 18px;">
+                        Hola <strong>${userName}</strong>,
+                    </p>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        Te informamos que las fotos de tu evento <strong>"${eventName}"</strong> fueron eliminadas automáticamente después de 60 días, como parte de nuestra política de almacenamiento.
+                    </p>
+                    
+                    <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                        ¡Gracias por usar SnapLive! Esperamos verte de nuevo en tu próximo evento. 🎉
+                    </p>
+                    
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                    
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                        © SnapLive - Compartí los mejores momentos
+                    </p>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('Resend error (photos deleted):', error);
+            return { success: false, error: error.message };
+        }
+        return { success: true, id: data.id };
+    } catch (error) {
+        console.error('Error sending photos deleted email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
     sendPaymentConfirmationEmail,
+    sendExpirationWarningEmail,
+    sendPhotosDeletedEmail,
     isEmailConfigured
 };
