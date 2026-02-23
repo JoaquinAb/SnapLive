@@ -1,26 +1,51 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { api } from '../../../../lib/api';
 import { usePhotos } from '../../../../hooks/usePhotos';
 
 /**
  * Página de Modo Pantalla
  * Galería a pantalla completa para displays grandes con modo presentación
+ * 
+ * Parámetros URL para modo Resolume Arena:
+ *   ?mode=resolume  → Activa modo Resolume (sin UI, fondo chroma, auto-slideshow)
+ *   ?bg=green|black|transparent  → Color de fondo (default: green en resolume, black en normal)
+ *   ?interval=N    → Intervalo de slideshow en segundos (default: 5)
+ *   ?animation=fade|zoom|none  → Tipo de transición (default: fade)
+ * 
+ * Ejemplo: /event/mi-evento/screen?mode=resolume&bg=green&interval=4
  */
-export default function ScreenModePage() {
+function ScreenModeContent() {
     const params = useParams();
     const slug = params.slug;
+    const searchParams = useSearchParams();
+
+    // Detectar modo Resolume desde URL
+    const isResolumeMode = searchParams.get('mode') === 'resolume';
+    const bgParam = searchParams.get('bg') || (isResolumeMode ? 'green' : 'black');
+    const intervalParam = Number(searchParams.get('interval')) || 5;
+    const animationParam = searchParams.get('animation') || 'fade';
 
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isSlideshow, setIsSlideshow] = useState(false);
-    const [slideInterval, setSlideInterval] = useState(5); // segundos
-    const [showControls, setShowControls] = useState(true);
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'fullscreen'
+    const [isSlideshow, setIsSlideshow] = useState(isResolumeMode); // Auto-start en Resolume
+    const [slideInterval, setSlideInterval] = useState(intervalParam);
+    const [showControls, setShowControls] = useState(!isResolumeMode);
+    const [viewMode, setViewMode] = useState(isResolumeMode ? 'fullscreen' : 'grid');
 
     const { photos, connected } = usePhotos(slug);
+
+    // Obtener color de fondo según parámetro
+    const getBgColor = () => {
+        switch (bgParam) {
+            case 'green': return '#00ff00';
+            case 'transparent': return 'transparent';
+            case 'black': return '#000000';
+            default: return isResolumeMode ? '#00ff00' : 'var(--color-bg-primary)';
+        }
+    };
 
     // Obtener evento
     useEffect(() => {
@@ -158,95 +183,128 @@ export default function ScreenModePage() {
             style={{
                 position: 'fixed',
                 inset: 0,
-                background: 'var(--color-bg-primary)',
+                background: getBgColor(),
                 overflow: 'hidden'
             }}
-            onMouseMove={() => viewMode === 'fullscreen' && setShowControls(true)}
+            onMouseMove={() => viewMode === 'fullscreen' && !isResolumeMode && setShowControls(true)}
         >
-            {/* Encabezado - siempre visible en grid, transiciona en fullscreen */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                padding: 'var(--space-lg)',
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                zIndex: 10,
-                opacity: viewMode === 'fullscreen' && !showControls ? 0 : 1,
-                transition: 'opacity 0.3s ease'
-            }}>
-                <div>
-                    <h2 style={{ fontSize: '1.5rem' }}>📸 {event?.name}</h2>
-                    <p className="text-muted">{photos.length} fotos</p>
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
-                    {connected && (
-                        <span className="badge badge-success">● En Vivo</span>
-                    )}
+            {/* Encabezado - oculto en modo Resolume */}
+            {!isResolumeMode && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    padding: 'var(--space-lg)',
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    zIndex: 10,
+                    opacity: viewMode === 'fullscreen' && !showControls ? 0 : 1,
+                    transition: 'opacity 0.3s ease'
+                }}>
+                    <div>
+                        <h2 style={{ fontSize: '1.5rem' }}>📸 {event?.name}</h2>
+                        <p className="text-muted">{photos.length} fotos</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                        {connected && (
+                            <span className="badge badge-success">● En Vivo</span>
+                        )}
 
-                    {/* Selector de intervalo */}
-                    <select
-                        value={slideInterval}
-                        onChange={(e) => setSlideInterval(Number(e.target.value))}
-                        style={{
-                            background: '#1a1a2e',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            borderRadius: 'var(--radius-md)',
-                            padding: 'var(--space-sm) var(--space-md)',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem'
-                        }}
-                    >
-                        <option value={3} style={{ background: '#1a1a2e', color: 'white' }}>3 seg</option>
-                        <option value={5} style={{ background: '#1a1a2e', color: 'white' }}>5 seg</option>
-                        <option value={8} style={{ background: '#1a1a2e', color: 'white' }}>8 seg</option>
-                        <option value={10} style={{ background: '#1a1a2e', color: 'white' }}>10 seg</option>
-                        <option value={15} style={{ background: '#1a1a2e', color: 'white' }}>15 seg</option>
-                    </select>
-
-                    {viewMode === 'fullscreen' ? (
-                        <>
-                            <button
-                                onClick={() => setIsSlideshow(!isSlideshow)}
-                                className={`btn btn-sm ${isSlideshow ? 'btn-primary' : 'btn-secondary'}`}
-                            >
-                                {isSlideshow ? '⏸️ Pausar' : '▶️ Reproducir'}
-                            </button>
-                            <button
-                                onClick={exitFullscreen}
-                                className="btn btn-sm btn-secondary"
-                            >
-                                ✕ Salir
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={startSlideshow}
-                            className="btn btn-sm btn-primary"
-                            disabled={photos.length === 0}
+                        {/* Selector de intervalo */}
+                        <select
+                            value={slideInterval}
+                            onChange={(e) => setSlideInterval(Number(e.target.value))}
+                            style={{
+                                background: '#1a1a2e',
+                                border: '1px solid rgba(255,255,255,0.3)',
+                                borderRadius: 'var(--radius-md)',
+                                padding: 'var(--space-sm) var(--space-md)',
+                                color: 'white',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem'
+                            }}
                         >
-                            ▶️ Iniciar Presentación
-                        </button>
-                    )}
+                            <option value={3} style={{ background: '#1a1a2e', color: 'white' }}>3 seg</option>
+                            <option value={5} style={{ background: '#1a1a2e', color: 'white' }}>5 seg</option>
+                            <option value={8} style={{ background: '#1a1a2e', color: 'white' }}>8 seg</option>
+                            <option value={10} style={{ background: '#1a1a2e', color: 'white' }}>10 seg</option>
+                            <option value={15} style={{ background: '#1a1a2e', color: 'white' }}>15 seg</option>
+                        </select>
+
+                        {viewMode === 'fullscreen' ? (
+                            <>
+                                <button
+                                    onClick={() => setIsSlideshow(!isSlideshow)}
+                                    className={`btn btn-sm ${isSlideshow ? 'btn-primary' : 'btn-secondary'}`}
+                                >
+                                    {isSlideshow ? '⏸️ Pausar' : '▶️ Reproducir'}
+                                </button>
+                                <button
+                                    onClick={exitFullscreen}
+                                    className="btn btn-sm btn-secondary"
+                                >
+                                    ✕ Salir
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={startSlideshow}
+                                className="btn btn-sm btn-primary"
+                                disabled={photos.length === 0}
+                            >
+                                ▶️ Iniciar Presentación
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Contenido Principal */}
             {photos.length === 0 ? (
-                <div className="flex-center" style={{ height: '100%', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '6rem' }}>📷</span>
-                    <h2 className="mt-xl">Esperando fotos...</h2>
-                    <p className="text-muted">¡Escaneá el código QR para empezar a subir!</p>
-                    <div className="pulse mt-xl">
-                        <div className="spinner"></div>
+                isResolumeMode ? (
+                    /* En Resolume, mostrar solo el fondo chroma cuando no hay fotos */
+                    <div style={{ height: '100%' }} />
+                ) : (
+                    <div className="flex-center" style={{ height: '100%', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '6rem' }}>📷</span>
+                        <h2 className="mt-xl">Esperando fotos...</h2>
+                        <p className="text-muted">¡Escaneá el código QR para empezar a subir!</p>
+                        <div className="pulse mt-xl">
+                            <div className="spinner"></div>
+                        </div>
                     </div>
+                )
+            ) : isResolumeMode ? (
+                /* Vista Resolume Arena - foto limpia sobre fondo chroma */
+                <div
+                    style={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '40px'
+                    }}
+                >
+                    <img
+                        key={photos[currentIndex]?.id}
+                        src={photos[currentIndex]?.url}
+                        alt=""
+                        style={{
+                            maxWidth: '90%',
+                            maxHeight: '90vh',
+                            objectFit: 'contain',
+                            borderRadius: '0',
+                            animation: animationParam === 'none' ? 'none' :
+                                animationParam === 'zoom' ? 'resolumeZoom 0.6s ease' :
+                                    'resolumeFade 0.6s ease'
+                        }}
+                    />
                 </div>
             ) : viewMode === 'fullscreen' ? (
-                /* Vista Fullscreen / Presentación */
+                /* Vista Fullscreen / Presentación (modo proyector normal) */
                 <div
                     style={{
                         height: '100%',
@@ -413,7 +471,7 @@ export default function ScreenModePage() {
 
             {/* Indicador de reproducción automática - removido porque molestaba */}
 
-            {/* CSS para la animación de barra de progreso */}
+            {/* CSS para animaciones */}
             <style jsx>{`
                 @keyframes progressBar {
                     from { width: 0%; }
@@ -423,7 +481,30 @@ export default function ScreenModePage() {
                     0%, 100% { opacity: 0.3; transform: scale(1); }
                     50% { opacity: 0.5; transform: scale(1.1); }
                 }
+                @keyframes resolumeFade {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes resolumeZoom {
+                    from { opacity: 0; transform: scale(0.85); }
+                    to { opacity: 1; transform: scale(1); }
+                }
             `}</style>
         </div>
+    );
+}
+
+/**
+ * Página principal con Suspense (necesario por useSearchParams)
+ */
+export default function ScreenModePage() {
+    return (
+        <Suspense fallback={
+            <div className="screen-mode flex-center" style={{ position: 'fixed', inset: 0, background: '#000' }}>
+                <div className="spinner"></div>
+            </div>
+        }>
+            <ScreenModeContent />
+        </Suspense>
     );
 }
