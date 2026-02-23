@@ -1,10 +1,15 @@
+'use client';
 import Link from 'next/link';
+import { useAuth } from '../hooks/useAuth';
 
 /**
  * Landing Page
  * Página de inicio moderna y visualmente atractiva
+ * Redirige a /dashboard si el usuario ya está autenticado
  */
 export default function HomePage() {
+    const { isAuthenticated, loading } = useAuth();
+    const ctaHref = isAuthenticated ? '/dashboard' : '/register';
     return (
         <div className="landing-page">
             {/* Hero Section */}
@@ -42,8 +47,8 @@ export default function HomePage() {
                             Tus invitados escanean un código QR, suben fotos y las ven aparecer en vivo en la pantalla grande.
                         </p>
                         <div className="flex flex-center gap-lg" style={{ flexWrap: 'wrap' }}>
-                            <Link href="/register" className="btn btn-primary btn-lg">
-                                Empezar
+                            <Link href={ctaHref} className="btn btn-primary btn-lg">
+                                {isAuthenticated ? 'Ir al Panel' : 'Empezar'}
                             </Link>
                         </div>
                     </div>
@@ -268,8 +273,8 @@ export default function HomePage() {
                     <p className="text-muted mb-xl" style={{ maxWidth: '500px', margin: '0 auto var(--space-xl)' }}>
                         Unite a miles de organizadores de eventos que confían en SnapLive.
                     </p>
-                    <Link href="/register" className="btn btn-primary btn-lg">
-                        Comenzar Ahora →
+                    <Link href={ctaHref} className="btn btn-primary btn-lg">
+                        {isAuthenticated ? 'Ir al Panel →' : 'Comenzar Ahora →'}
                     </Link>
                 </div>
             </section>
