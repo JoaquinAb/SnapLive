@@ -428,21 +428,42 @@ function DashboardContent() {
                                     const diffMs = expirationDate - today;
                                     const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-                                    // Solo mostrar si quedan 30 días o menos
-                                    if (daysRemaining > 30 || daysRemaining < 0) return null;
+                                    if (daysRemaining < 0) {
+                                        return (
+                                            <div style={{
+                                                background: 'rgba(107, 114, 128, 0.15)',
+                                                border: '1px solid rgba(107, 114, 128, 0.3)',
+                                                borderRadius: 'var(--radius-md)',
+                                                padding: 'var(--space-sm) var(--space-md)',
+                                                marginTop: 'var(--space-sm)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 'var(--space-sm)',
+                                                fontSize: '0.85rem'
+                                            }}>
+                                                📦 <span>Fotos eliminadas automáticamente</span>
+                                            </div>
+                                        );
+                                    }
 
                                     const isUrgent = daysRemaining <= 1;
                                     const isWarning = daysRemaining <= 7;
+                                    const isAlert = daysRemaining <= 30;
                                     const bgColor = isUrgent
                                         ? 'rgba(239, 68, 68, 0.15)'
                                         : isWarning
                                             ? 'rgba(245, 158, 11, 0.15)'
-                                            : 'rgba(234, 179, 8, 0.1)';
+                                            : isAlert
+                                                ? 'rgba(234, 179, 8, 0.1)'
+                                                : 'rgba(124, 58, 237, 0.08)';
                                     const borderColor = isUrgent
                                         ? 'rgba(239, 68, 68, 0.4)'
                                         : isWarning
                                             ? 'rgba(245, 158, 11, 0.4)'
-                                            : 'rgba(234, 179, 8, 0.3)';
+                                            : isAlert
+                                                ? 'rgba(234, 179, 8, 0.3)'
+                                                : 'rgba(124, 58, 237, 0.2)';
+                                    const icon = isUrgent ? '🚨' : isWarning ? '⚠️' : isAlert ? '⚠️' : '📅';
 
                                     return (
                                         <div style={{
@@ -459,19 +480,21 @@ function DashboardContent() {
                                             gap: 'var(--space-sm)'
                                         }}>
                                             <span>
-                                                {isUrgent ? '🚨' : '⚠️'} Las fotos se eliminan en <strong>{daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}</strong>
+                                                {icon} Fotos disponibles por <strong>{daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}</strong>
                                             </span>
-                                            <Link
-                                                href={`/event/${event.slug}`}
-                                                style={{
-                                                    color: 'var(--color-primary)',
-                                                    fontWeight: 'bold',
-                                                    textDecoration: 'underline',
-                                                    fontSize: '0.85rem'
-                                                }}
-                                            >
-                                                📥 Descargar
-                                            </Link>
+                                            {isAlert && (
+                                                <Link
+                                                    href={`/event/${event.slug}`}
+                                                    style={{
+                                                        color: 'var(--color-primary)',
+                                                        fontWeight: 'bold',
+                                                        textDecoration: 'underline',
+                                                        fontSize: '0.85rem'
+                                                    }}
+                                                >
+                                                    📥 Descargar
+                                                </Link>
+                                            )}
                                         </div>
                                     );
                                 })()}

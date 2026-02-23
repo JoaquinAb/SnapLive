@@ -162,10 +162,10 @@ export default function HomePage() {
                         {/* Feature 4 */}
                         <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '300ms' }}>
                             <span style={{ fontSize: '3rem' }}>☁️</span>
-                            <h3 className="mt-lg mb-md">Almacenamiento en la Nube</h3>
+                            <h3 className="mt-lg mb-md">60 Días para Descargar</h3>
                             <p className="text-muted">
-                                Todas las fotos guardadas de forma segura en la nube.
-                                Descargalas cuando quieras.
+                                Todas las fotos guardadas de forma segura en la nube
+                                durante 60 días después del evento. ¡Descargalas a tiempo!
                             </p>
                         </div>
 

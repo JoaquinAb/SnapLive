@@ -108,6 +108,85 @@ export default function GuestEventPage() {
                             )}
                         </>
                     )}
+
+                    {/* Días restantes para descargar */}
+                    {(() => {
+                        if (!event?.eventDate) return null;
+
+                        // Si ya se limpiaron las fotos
+                        if (event.photosCleanedAt) {
+                            return (
+                                <div style={{
+                                    background: 'rgba(107, 114, 128, 0.15)',
+                                    border: '1px solid rgba(107, 114, 128, 0.3)',
+                                    borderRadius: 'var(--radius-md)',
+                                    padding: 'var(--space-sm) var(--space-md)',
+                                    marginTop: 'var(--space-md)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-sm)',
+                                    fontSize: '0.85rem'
+                                }}>
+                                    📦 Las fotos de este evento ya no están disponibles
+                                </div>
+                            );
+                        }
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const evDate = new Date(event.eventDate + 'T12:00:00');
+                        const expirationDate = new Date(evDate);
+                        expirationDate.setDate(expirationDate.getDate() + 60);
+                        const diffMs = expirationDate - today;
+                        const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                        if (daysRemaining < 0) {
+                            return (
+                                <div style={{
+                                    background: 'rgba(107, 114, 128, 0.15)',
+                                    border: '1px solid rgba(107, 114, 128, 0.3)',
+                                    borderRadius: 'var(--radius-md)',
+                                    padding: 'var(--space-sm) var(--space-md)',
+                                    marginTop: 'var(--space-md)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-sm)',
+                                    fontSize: '0.85rem'
+                                }}>
+                                    📦 Las fotos de este evento ya no están disponibles
+                                </div>
+                            );
+                        }
+
+                        const isUrgent = daysRemaining <= 1;
+                        const isWarning = daysRemaining <= 7;
+                        const bgColor = isUrgent
+                            ? 'rgba(239, 68, 68, 0.15)'
+                            : isWarning
+                                ? 'rgba(245, 158, 11, 0.15)'
+                                : 'rgba(124, 58, 237, 0.1)';
+                        const borderColor = isUrgent
+                            ? 'rgba(239, 68, 68, 0.4)'
+                            : isWarning
+                                ? 'rgba(245, 158, 11, 0.4)'
+                                : 'rgba(124, 58, 237, 0.25)';
+
+                        return (
+                            <div style={{
+                                background: bgColor,
+                                border: `1px solid ${borderColor}`,
+                                borderRadius: 'var(--radius-md)',
+                                padding: 'var(--space-sm) var(--space-md)',
+                                marginTop: 'var(--space-md)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 'var(--space-sm)',
+                                fontSize: '0.85rem'
+                            }}>
+                                {isUrgent ? '🚨' : isWarning ? '⚠️' : '📅'} Fotos disponibles por <strong>{daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}</strong> más
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Navegación por Pestañas */}
