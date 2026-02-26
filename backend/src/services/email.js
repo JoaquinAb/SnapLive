@@ -23,6 +23,11 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             ciphers: 'SSLv3',
             rejectUnauthorized: false
         }
+    }, {
+        // Enforce IPv4 because Railway IPv6 to Gmail usually times out
+        socket: {
+            family: 4
+        }
     });
     console.log(`📧 Email configurado con SMTP: ${process.env.SMTP_HOST || 'smtp.office365.com'} (${process.env.SMTP_USER})`);
 } else {
