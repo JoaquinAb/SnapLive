@@ -22,7 +22,7 @@ const server = http.createServer(app);
 
 // Trust the first proxy (Railway/Nginx)
 // This is required for rate-limiting to work behind a proxy
-app.set('trust proxy', true); // Trust all proxies (required for Railway/Vercel)
+app.set('trust proxy', 1); // Trust first hop proxy (Railway frontend load balancer)
 
 // Initialize WebSocket
 wsService.init(server);
