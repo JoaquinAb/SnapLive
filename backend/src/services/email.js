@@ -23,9 +23,6 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             ciphers: 'SSLv3',
             rejectUnauthorized: false
         },
-        // Enforce IPv4 because Railway IPv6 to Gmail usually times out
-        family: 4,
-        // Add explicit timeouts so it fails fast instead of hanging
         connectionTimeout: 10000,
         greetingTimeout: 10000,
         socketTimeout: 10000,
