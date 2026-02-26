@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
+const OAuth2 = google.auth.OAuth2;
 
 /**
  * Email Service
@@ -10,29 +12,67 @@ const nodemailer = require('nodemailer');
 // Initialize Nodemailer transporter
 let transporter = null;
 
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.office365.com',
-        port: parseInt(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        },
-        tls: {
-            ciphers: 'SSLv3',
-            rejectUnauthorized: false
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
-        debug: true, // Show SMTP traffic in logs
-        logger: true // Log information into console
-    });
-    console.log(`📧 Email configurado con SMTP: ${process.env.SMTP_HOST || 'smtp.office365.com'} (${process.env.SMTP_USER})`);
-} else {
-    console.log('⚠️ Email en MODO DEMO (sin credenciales SMTP configuradas)');
-}
+const createTransporter = async () => {
+    try {
+        // 1. OAUTH2 GMAIL API (MÉTODO RECOMENDADO PARA RAILWAY)
+        if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+            const oauth2Client = new OAuth2(
+                process.env.GMAIL_CLIENT_ID,
+                process.env.GMAIL_CLIENT_SECRET,
+                "https://developers.google.com/oauthplayground" // Poner esto siempre
+            );
+
+            oauth2Client.setCredentials({
+                refresh_token: process.env.GMAIL_REFRESH_TOKEN
+            });
+
+            // Nodemailer con OAuth2 envuelve llamadas a HTTP API internamente, esquivando puertos SMTP locales.
+            transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    type: "OAuth2",
+                    user: process.env.SMTP_USER || process.env.GMAIL_USER,
+                    clientId: process.env.GMAIL_CLIENT_ID,
+                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+                },
+                // Add explicit timeouts so it fails fast instead of hanging
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
+            });
+
+            console.log(`📧 Email configurado con GMAIL API OAUTH2 (${process.env.SMTP_USER || process.env.GMAIL_USER})`);
+        }
+        // 2. SMTP Clásico (Se bloquea en algunos hostings gratuitos como Railway)
+        else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST || 'smtp.office365.com',
+                port: parseInt(process.env.SMTP_PORT) || 587,
+                secure: process.env.SMTP_SECURE === 'true',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS
+                },
+                tls: {
+                    ciphers: 'SSLv3',
+                    rejectUnauthorized: false
+                },
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 10000,
+            });
+            console.log(`📧 Email configurado con SMTP Clásico: ${process.env.SMTP_HOST} (${process.env.SMTP_USER})`);
+        } else {
+            console.log('⚠️ Email en MODO DEMO (sin credenciales de API ni SMTP)');
+        }
+    } catch (error) {
+        console.error('❌ Error configurando email transporter:', error);
+    }
+};
+
+// Start transporter initialization
+createTransporter();
 
 // Check if email is configured
 const isEmailConfigured = () => {
