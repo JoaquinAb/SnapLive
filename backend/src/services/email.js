@@ -195,13 +195,8 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                     Hacé clic en el siguiente link para crear una nueva contraseña:
                 </p>
                 
-                <p style="text-align: center; margin: 30px 0;">
-                    <a href="${resetLink}" style="color: #7c3aed; font-size: 18px; font-weight: bold;">Restablecer Contraseña</a>
-                </p>
-
-                <p style="color: #999; font-size: 12px; word-break: break-all;">
-                    Si el link de arriba no funciona, copia y pega esta URL en tu navegador:<br>
-                    ${resetLink}
+                <p style="text-align: center; margin: 30px 0; padding: 15px; background-color: #f3f4f6;">
+                    <a href="${resetLink}" style="color: #7c3aed; font-size: 14px; word-break: break-all;">${resetLink}</a>
                 </p>
                 
                 <p style="color: #999; font-size: 14px;">
