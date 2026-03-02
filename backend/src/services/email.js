@@ -195,18 +195,13 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                     Hacé clic en el siguiente botón para crear una nueva contraseña:
                 </p>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${resetLink}" 
-                       style="background: linear-gradient(135deg, #7c3aed, #a855f7); 
-                              color: white; 
-                              padding: 15px 30px; 
-                              text-decoration: none; 
-                              border-radius: 8px; 
-                              font-size: 16px;
-                              display: inline-block;">
-                        Restablecer Contraseña
-                    </a>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px auto;">
+                    <tr>
+                        <td align="center" style="background-color: #7c3aed; padding: 15px 30px;">
+                            <a href="${resetLink}" style="color: #ffffff; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif;">Restablecer Contrase\u00f1a</a>
+                        </td>
+                    </tr>
+                </table>
                 
                 <p style="color: #999; font-size: 14px;">
                     Este link expira en 1 hora. Si no solicitaste este cambio, podés ignorar este email.
@@ -271,11 +266,15 @@ const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
                     <h1 style="color: #7c3aed;">📸 SnapLive</h1>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-                    <span style="font-size: 48px;">✅</span>
-                    <h2 style="margin: 15px 0 5px 0;">¡Tu pago fue confirmado!</h2>
-                    <p style="margin: 0; opacity: 0.9;">${formattedAmount}</p>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="margin-bottom: 30px;">
+                    <tr>
+                        <td align="center" style="background-color: #10b981; color: white; padding: 30px;">
+                            <span style="font-size: 48px;">&#x2705;</span>
+                            <h2 style="margin: 15px 0 5px 0;">&#xa1;Tu pago fue confirmado!</h2>
+                            <p style="margin: 0;">${formattedAmount}</p>
+                        </td>
+                    </tr>
+                </table>
                 
                 <p style="color: #333; font-size: 18px;">
                     Hola <strong>${userName}</strong>,
@@ -289,18 +288,13 @@ const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
                     Ya podés crear tu evento y compartir el código QR con tus invitados para que suban sus fotos en tiempo real.
                 </p>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${dashboardLink}" 
-                       style="background: linear-gradient(135deg, #7c3aed, #a855f7); 
-                              color: white; 
-                              padding: 15px 30px; 
-                              text-decoration: none; 
-                              border-radius: 8px; 
-                              font-size: 16px;
-                              display: inline-block;">
-                        Ir a Mi Panel
-                    </a>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px auto;">
+                    <tr>
+                        <td align="center" style="background-color: #7c3aed; padding: 15px 30px;">
+                            <a href="${dashboardLink}" style="color: #ffffff; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif;">Ir a Mi Panel</a>
+                        </td>
+                    </tr>
+                </table>
                 
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                 
@@ -358,13 +352,17 @@ const sendExpirationWarningEmail = async (email, userName, eventName, daysLeft, 
                     <h1 style="color: #7c3aed;">📸 SnapLive</h1>
                 </div>
                 
-                <div style="background: ${isUrgent ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #f59e0b, #d97706)'}; color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-                    <span style="font-size: 48px;">${isUrgent ? '🚨' : '⚠️'}</span>
-                    <h2 style="margin: 15px 0 5px 0;">
-                        ${isUrgent ? '¡Último día para descargar tus fotos!' : `Tus fotos se eliminan en ${daysLeft} días`}
-                    </h2>
-                    <p style="margin: 0; opacity: 0.9;">Evento: ${eventName}</p>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="margin-bottom: 30px;">
+                    <tr>
+                        <td align="center" style="background-color: ${isUrgent ? '#ef4444' : '#f59e0b'}; color: white; padding: 30px;">
+                            <span style="font-size: 48px;">${isUrgent ? '&#x1f6a8;' : '&#x26a0;&#xfe0f;'}</span>
+                            <h2 style="margin: 15px 0 5px 0;">
+                                ${isUrgent ? '&#xa1;\u00daltimo d\u00eda para descargar tus fotos!' : `Tus fotos se eliminan en ${daysLeft} d\u00edas`}
+                            </h2>
+                            <p style="margin: 0;">Evento: ${eventName}</p>
+                        </td>
+                    </tr>
+                </table>
                 
                 <p style="color: #333; font-size: 18px;">
                     Hola <strong>${userName}</strong>,
@@ -378,18 +376,13 @@ const sendExpirationWarningEmail = async (email, userName, eventName, daysLeft, 
                     Si todavía no descargaste tus fotos, <strong>hacelo ahora</strong> antes de que sean eliminadas permanentemente.
                 </p>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${downloadLink}" 
-                       style="background: linear-gradient(135deg, #7c3aed, #a855f7); 
-                              color: white; 
-                              padding: 15px 30px; 
-                              text-decoration: none; 
-                              border-radius: 8px; 
-                              font-size: 16px;
-                              display: inline-block;">
-                        📥 Descargar Mis Fotos
-                    </a>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px auto;">
+                    <tr>
+                        <td align="center" style="background-color: #7c3aed; padding: 15px 30px;">
+                            <a href="${downloadLink}" style="color: #ffffff; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif;">&#x1f4e5; Descargar Mis Fotos</a>
+                        </td>
+                    </tr>
+                </table>
                 
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                 
@@ -433,11 +426,15 @@ const sendPhotosDeletedEmail = async (email, userName, eventName) => {
                     <h1 style="color: #7c3aed;">📸 SnapLive</h1>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
-                    <span style="font-size: 48px;">📦</span>
-                    <h2 style="margin: 15px 0 5px 0;">Fotos eliminadas</h2>
-                    <p style="margin: 0; opacity: 0.9;">Evento: ${eventName}</p>
-                </div>
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="margin-bottom: 30px;">
+                    <tr>
+                        <td align="center" style="background-color: #6b7280; color: white; padding: 30px;">
+                            <span style="font-size: 48px;">&#x1f4e6;</span>
+                            <h2 style="margin: 15px 0 5px 0;">Fotos eliminadas</h2>
+                            <p style="margin: 0;">Evento: ${eventName}</p>
+                        </td>
+                    </tr>
+                </table>
                 
                 <p style="color: #333; font-size: 18px;">
                     Hola <strong>${userName}</strong>,
