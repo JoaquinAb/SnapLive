@@ -80,18 +80,28 @@ const getFromAddress = () => {
 
 /**
  * Build a raw RFC 2822 email string for the Gmail API
+ * Uses base64 Content-Transfer-Encoding with 76-char line wrapping (RFC 2045)
+ * to prevent mail servers from breaking long HTML lines.
  */
 const buildRawEmail = ({ from, to, subject, html }) => {
+    // Base64-encode the HTML body with 76-char line wrapping (RFC 2045)
+    const encodedHtml = Buffer.from(html)
+        .toString('base64')
+        .match(/.{1,76}/g)
+        .join('\r\n');
+
     const messageParts = [
         `From: ${from}`,
         `To: ${to}`,
         `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
         `MIME-Version: 1.0`,
         `Content-Type: text/html; charset="UTF-8"`,
+        `Content-Transfer-Encoding: base64`,
         ``,
-        html,
+        encodedHtml,
     ];
 
+    // URL-safe base64 encode the entire message for the Gmail API
     return Buffer.from(messageParts.join('\r\n'))
         .toString('base64')
         .replace(/\+/g, '-')
