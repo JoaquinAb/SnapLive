@@ -80,10 +80,17 @@ const getFromAddress = () => {
 
 /**
  * Build a raw RFC 2822 email string for the Gmail API.
- * Uses raw HTML body (no inner base64) — Gmail API handles the outer encoding.
- * This approach was confirmed to render <a> tags correctly in Outlook.
+ * HTML is minified to a single line to avoid MIME body line-ending issues
+ * that cause Outlook to break <a> tags.
  */
 const buildRawEmail = ({ from, to, subject, html }) => {
+    // Minify HTML: remove newlines, collapse whitespace between tags
+    // This matches the structure of our confirmed-working test email
+    const minifiedHtml = html
+        .replace(/\r?\n\s*/g, '')  // Remove newlines + leading whitespace
+        .replace(/>\s+</g, '><')   // Remove whitespace between tags
+        .trim();
+
     const messageParts = [
         `From: ${from}`,
         `To: ${to}`,
@@ -91,7 +98,7 @@ const buildRawEmail = ({ from, to, subject, html }) => {
         `MIME-Version: 1.0`,
         `Content-Type: text/html; charset=utf-8`,
         ``,
-        html,
+        minifiedHtml,
     ];
 
     // URL-safe base64 encode the entire message for the Gmail API
