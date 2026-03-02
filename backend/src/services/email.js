@@ -178,11 +178,11 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 
     const result = await sendEmail({
         to: email,
-        subject: '🔐 Recuperar contraseña - SnapLive',
+        subject: 'Recuperar contraseña - SnapLive',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #7c3aed;">📸 SnapLive</h1>
+                    <h1 style="color: #7c3aed;">SnapLive</h1>
                 </div>
                 
                 <h2 style="color: #333;">Recuperar contraseña</h2>
@@ -192,16 +192,17 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                 </p>
                 
                 <p style="color: #666; font-size: 16px;">
-                    Hacé clic en el siguiente botón para crear una nueva contraseña:
+                    Hacé clic en el siguiente link para crear una nueva contraseña:
                 </p>
                 
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px auto;">
-                    <tr>
-                        <td align="center" style="background-color: #7c3aed; padding: 15px 30px;">
-                            <a href="${resetLink}" style="color: #ffffff; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif;">Restablecer Contrase\u00f1a</a>
-                        </td>
-                    </tr>
-                </table>
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="color: #7c3aed; font-size: 18px; font-weight: bold;">Restablecer Contraseña</a>
+                </p>
+
+                <p style="color: #999; font-size: 12px; word-break: break-all;">
+                    Si el link de arriba no funciona, copia y pega esta URL en tu navegador:<br>
+                    ${resetLink}
+                </p>
                 
                 <p style="color: #999; font-size: 14px;">
                     Este link expira en 1 hora. Si no solicitaste este cambio, podés ignorar este email.
@@ -210,7 +211,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                 
                 <p style="color: #999; font-size: 12px; text-align: center;">
-                    © SnapLive - Compartí los mejores momentos
+                    &copy; SnapLive - Compartí los mejores momentos
                 </p>
             </div>
         `
