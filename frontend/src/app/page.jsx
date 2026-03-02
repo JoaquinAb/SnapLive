@@ -95,7 +95,7 @@ export default function HomePage() {
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'
                         }}>
-                            $4.999
+                            $49.999
                         </div>
                         <p className="text-muted mb-lg" style={{ fontSize: '0.9rem' }}>
                             Sin suscripciones. Sin costos ocultos.
