@@ -178,25 +178,30 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 
     const result = await sendEmail({
         to: email,
-        subject: 'Recuperar contraseña - SnapLive',
+        subject: '🔐 Recuperar contraseña - SnapLive',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #7c3aed;">SnapLive</h1>
+                    <h1 style="color: #7c3aed;">📸 SnapLive</h1>
                 </div>
                 
-                <h2 style="color: #333;">Recuperar contraseña</h2>
+                <h2 style="color: #333;">🔐 Recuperar contraseña</h2>
                 
                 <p style="color: #666; font-size: 16px;">
                     Recibimos una solicitud para restablecer la contraseña de tu cuenta.
                 </p>
                 
                 <p style="color: #666; font-size: 16px;">
-                    Hacé clic en el siguiente link para crear una nueva contraseña:
+                    Hacé clic en el siguiente botón para crear una nueva contraseña:
                 </p>
                 
-                <p style="text-align: center; margin: 30px 0; padding: 15px; background-color: #f3f4f6;">
-                    <a href="${resetLink}" style="color: #7c3aed; font-size: 14px; word-break: break-all;">${resetLink}</a>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="background-color: #7c3aed; color: #ffffff; padding: 15px 30px; text-decoration: none; font-size: 16px; font-family: Arial, sans-serif;">Restablecer Contraseña</a>
+                </div>
+
+                <p style="color: #999; font-size: 12px; word-break: break-all;">
+                    Si el botón no funciona, copiá y pegá este link en tu navegador:<br>
+                    <a href="${resetLink}">${resetLink}</a>
                 </p>
                 
                 <p style="color: #999; font-size: 14px;">
