@@ -1,52 +1,45 @@
-const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
-const OAuth2 = google.auth.OAuth2;
 
 /**
  * Email Service
  * Handles sending emails for password reset, payment confirmation, etc.
- * Uses Nodemailer with SMTP (Hotmail/Outlook/Gmail)
- * Supports demo mode when no SMTP credentials are configured
+ * 
+ * Método 1: Gmail REST API via OAuth2 (RECOMENDADO - funciona en Railway)
+ *   → Envía emails via HTTPS, NO necesita puertos SMTP
+ * Método 2: SMTP clásico (fallback)
+ *   → Se bloquea en hostings que cierran puertos SMTP (ej: Railway)
+ * Método 3: Demo mode (sin credenciales)
  */
 
-// Initialize Nodemailer transporter
-let transporter = null;
+// Email transport mode
+let emailMode = 'demo'; // 'gmail-api' | 'smtp' | 'demo'
+let gmailClient = null;
+let smtpTransporter = null;
 
-const createTransporter = async () => {
+const initializeEmail = () => {
     try {
-        // 1. OAUTH2 GMAIL API (MÉTODO RECOMENDADO PARA RAILWAY)
+        // 1. GMAIL REST API via OAuth2 (NO usa SMTP, usa HTTPS)
         if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
-            const oauth2Client = new OAuth2(
+            const oauth2Client = new google.auth.OAuth2(
                 process.env.GMAIL_CLIENT_ID,
                 process.env.GMAIL_CLIENT_SECRET,
-                "https://developers.google.com/oauthplayground" // Poner esto siempre
+                "https://developers.google.com/oauthplayground"
             );
 
             oauth2Client.setCredentials({
                 refresh_token: process.env.GMAIL_REFRESH_TOKEN
             });
 
-            // Nodemailer con OAuth2 envuelve llamadas a HTTP API internamente, esquivando puertos SMTP locales.
-            transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    type: "OAuth2",
-                    user: process.env.SMTP_USER || process.env.GMAIL_USER,
-                    clientId: process.env.GMAIL_CLIENT_ID,
-                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                },
-                // Add explicit timeouts so it fails fast instead of hanging
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 10000,
-            });
+            gmailClient = google.gmail({ version: 'v1', auth: oauth2Client });
+            emailMode = 'gmail-api';
 
-            console.log(`📧 Email configurado con GMAIL API OAUTH2 (${process.env.SMTP_USER || process.env.GMAIL_USER})`);
+            const user = process.env.GMAIL_USER || process.env.SMTP_USER;
+            console.log(`📧 Email configurado con GMAIL REST API (${user}) — NO usa SMTP, envía via HTTPS`);
         }
-        // 2. SMTP Clásico (Se bloquea en algunos hostings gratuitos como Railway)
+        // 2. SMTP Clásico (fallback)
         else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-            transporter = nodemailer.createTransport({
+            const nodemailer = require('nodemailer');
+            smtpTransporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST || 'smtp.office365.com',
                 port: parseInt(process.env.SMTP_PORT) || 587,
                 secure: process.env.SMTP_SECURE === 'true',
@@ -62,30 +55,60 @@ const createTransporter = async () => {
                 greetingTimeout: 10000,
                 socketTimeout: 10000,
             });
+            emailMode = 'smtp';
             console.log(`📧 Email configurado con SMTP Clásico: ${process.env.SMTP_HOST} (${process.env.SMTP_USER})`);
         } else {
             console.log('⚠️ Email en MODO DEMO (sin credenciales de API ni SMTP)');
         }
     } catch (error) {
-        console.error('❌ Error configurando email transporter:', error);
+        console.error('❌ Error configurando email:', error);
     }
 };
 
-// Start transporter initialization
-createTransporter();
+// Initialize on module load
+initializeEmail();
 
 // Check if email is configured
 const isEmailConfigured = () => {
-    return !!transporter;
+    return emailMode !== 'demo';
 };
 
 // Get the "from" address
 const getFromAddress = () => {
-    return process.env.SMTP_FROM || `SnapLive <${process.env.SMTP_USER}>`;
+    return process.env.SMTP_FROM || `SnapLive <${process.env.GMAIL_USER || process.env.SMTP_USER}>`;
 };
 
 /**
- * Send an email using Nodemailer
+ * Build a raw RFC 2822 email string for the Gmail API
+ */
+const buildRawEmail = ({ from, to, subject, html }) => {
+    const boundary = `boundary_${Date.now()}`;
+    const rawLines = [
+        `From: ${from}`,
+        `To: ${to}`,
+        `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
+        `MIME-Version: 1.0`,
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        ``,
+        `--${boundary}`,
+        `Content-Type: text/html; charset="UTF-8"`,
+        `Content-Transfer-Encoding: base64`,
+        ``,
+        Buffer.from(html).toString('base64'),
+        ``,
+        `--${boundary}--`,
+    ];
+
+    return Buffer.from(rawLines.join('\r\n'))
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+};
+
+/**
+ * Send an email
+ * Uses Gmail REST API (HTTPS) or SMTP depending on config
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
@@ -98,15 +121,30 @@ const sendEmail = async ({ to, subject, html }) => {
     }
 
     try {
-        const info = await transporter.sendMail({
-            from: getFromAddress(),
-            to,
-            subject,
-            html
-        });
+        if (emailMode === 'gmail-api') {
+            // Gmail REST API — envía via HTTPS, NO necesita puertos SMTP
+            const from = getFromAddress();
+            const raw = buildRawEmail({ from, to, subject, html });
 
-        console.log(`✅ Email enviado a ${to} (ID: ${info.messageId})`);
-        return { success: true, id: info.messageId };
+            const result = await gmailClient.users.messages.send({
+                userId: 'me',
+                requestBody: { raw },
+            });
+
+            console.log(`✅ Email enviado via Gmail API a ${to} (ID: ${result.data.id})`);
+            return { success: true, id: result.data.id };
+        } else if (emailMode === 'smtp') {
+            // SMTP clásico
+            const info = await smtpTransporter.sendMail({
+                from: getFromAddress(),
+                to,
+                subject,
+                html
+            });
+
+            console.log(`✅ Email enviado via SMTP a ${to} (ID: ${info.messageId})`);
+            return { success: true, id: info.messageId };
+        }
     } catch (error) {
         console.error(`❌ Error enviando email a ${to}:`, error.message);
         return { success: false, error: error.message };
