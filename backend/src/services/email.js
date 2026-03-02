@@ -82,24 +82,17 @@ const getFromAddress = () => {
  * Build a raw RFC 2822 email string for the Gmail API
  */
 const buildRawEmail = ({ from, to, subject, html }) => {
-    const boundary = `boundary_${Date.now()}`;
-    const rawLines = [
+    const messageParts = [
         `From: ${from}`,
         `To: ${to}`,
         `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
         `MIME-Version: 1.0`,
-        `Content-Type: multipart/alternative; boundary="${boundary}"`,
-        ``,
-        `--${boundary}`,
         `Content-Type: text/html; charset="UTF-8"`,
-        `Content-Transfer-Encoding: base64`,
         ``,
-        Buffer.from(html).toString('base64'),
-        ``,
-        `--${boundary}--`,
+        html,
     ];
 
-    return Buffer.from(rawLines.join('\r\n'))
+    return Buffer.from(messageParts.join('\r\n'))
         .toString('base64')
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
