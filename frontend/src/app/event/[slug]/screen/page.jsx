@@ -341,7 +341,7 @@ function ScreenModeContent() {
                         ‹
                     </button>
 
-                    {/* Imagen actual con transición */}
+                    {/* Imagen actual con transición - formato cuadrado uniforme */}
                     <div style={{
                         position: 'relative',
                         width: '100%',
@@ -350,19 +350,27 @@ function ScreenModeContent() {
                         alignItems: 'center',
                         justifyContent: 'center'
                     }}>
-                        <img
-                            key={photos[currentIndex]?.id}
-                            src={photos[currentIndex]?.url}
-                            alt=""
-                            style={{
-                                maxWidth: '90%',
-                                maxHeight: '85vh',
-                                objectFit: 'contain',
-                                borderRadius: 'var(--radius-lg)',
-                                boxShadow: 'var(--shadow-lg)',
-                                animation: 'fadeIn 0.5s ease'
-                            }}
-                        />
+                        <div style={{
+                            width: 'min(85vh, 85vw)',
+                            height: 'min(85vh, 85vw)',
+                            aspectRatio: '1 / 1',
+                            borderRadius: 'var(--radius-lg)',
+                            overflow: 'hidden',
+                            boxShadow: 'var(--shadow-lg)',
+                            animation: 'fadeIn 0.5s ease'
+                        }}>
+                            <img
+                                key={photos[currentIndex]?.id}
+                                src={photos[currentIndex]?.url}
+                                alt=""
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block'
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* Botón siguiente */}
