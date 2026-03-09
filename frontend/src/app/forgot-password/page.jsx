@@ -11,7 +11,6 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-    const [demoLink, setDemoLink] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,13 +18,8 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const result = await api.forgotPassword(email);
+            await api.forgotPassword(email);
             setSuccess(true);
-
-            // En modo demo, mostrar el link
-            if (result.demo && result.resetLink) {
-                setDemoLink(result.resetLink);
-            }
         } catch (err) {
             setError(err.message);
         } finally {
@@ -59,26 +53,6 @@ export default function ForgotPasswordPage() {
                         <div className="alert alert-success mb-lg">
                             ✅ Si el email existe, recibirás un link para restablecer tu contraseña.
                         </div>
-
-                        {demoLink && (
-                            <div style={{
-                                background: 'rgba(168, 85, 247, 0.1)',
-                                border: '1px solid rgba(168, 85, 247, 0.3)',
-                                borderRadius: 'var(--radius-md)',
-                                padding: 'var(--space-lg)',
-                                marginBottom: 'var(--space-lg)'
-                            }}>
-                                <p className="text-muted mb-md" style={{ fontSize: '0.875rem' }}>
-                                    🧪 <strong>Modo Demo:</strong> Usá este link para restablecer tu contraseña
-                                </p>
-                                <Link
-                                    href={demoLink.replace(process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000', '')}
-                                    className="btn btn-primary btn-sm"
-                                >
-                                    Ir a Restablecer Contraseña
-                                </Link>
-                            </div>
-                        )}
 
                         <Link href="/login" className="btn btn-secondary">
                             Volver al Login

@@ -69,7 +69,7 @@ function DashboardContent() {
                     // En caso de error, asumir que no puede crear evento para obligar a verificar/pagar
                     // O podría ser un error de red, pero mejor fallar seguro
                     console.error('Error fetching payment status:', e);
-                    setPaymentStatus({ canCreateEvent: false, demoMode: true });
+                    setPaymentStatus({ canCreateEvent: false });
                 }
             } catch (err) {
                 console.error('Error al obtener eventos:', err);
@@ -78,7 +78,7 @@ function DashboardContent() {
                     setPaymentStatus(status);
                 } catch (e) {
                     console.error('Error fetching payment status (retry):', e);
-                    setPaymentStatus({ canCreateEvent: false, demoMode: true });
+                    setPaymentStatus({ canCreateEvent: false });
                 }
             } finally {
                 setLoading(false);
@@ -115,8 +115,8 @@ function DashboardContent() {
             }
 
             if (result.demo) {
-                setSuccessMessage('¡Pago simulado exitoso! (Modo Demo)');
-                setPaymentStatus({ canCreateEvent: true, demoMode: true });
+                setSuccessMessage('¡Pago registrado exitoso!');
+                setPaymentStatus({ canCreateEvent: true });
                 setShowPaymentModal(false);
                 setLoading(false);
                 // Redirigir a crear evento
@@ -590,11 +590,11 @@ function DashboardContent() {
                         ))}
                     </div>
                 ) : paymentStatus?.canCreateEvent ? (
-                    /* No tiene eventos pero puede crear (tiene pago o modo demo) */
+                    /* No tiene eventos pero puede crear (tiene pago) */
                     <div className="card text-center">
                         <span style={{ fontSize: '4rem' }}>🎉</span>
                         <h2 className="mt-lg mb-md">
-                            {paymentStatus?.demoMode ? '¡Modo Demo Activo!' : '¡Listo para Empezar!'}
+                            ¡Listo para Empezar!
                         </h2>
                         <p className="text-muted mb-xl">
                             Creá tu primer evento y empezá a recibir fotos de tus invitados.

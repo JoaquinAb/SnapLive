@@ -18,8 +18,14 @@ let smtpTransporter = null;
 
 const initializeEmail = () => {
     try {
+        // Diagnóstico de credenciales
+        const hasClientId = !!process.env.GMAIL_CLIENT_ID;
+        const hasClientSecret = !!process.env.GMAIL_CLIENT_SECRET;
+        const hasRefreshToken = !!process.env.GMAIL_REFRESH_TOKEN;
+        console.log(`📧 [Email Init] Credenciales Gmail API: CLIENT_ID=${hasClientId}, CLIENT_SECRET=${hasClientSecret}, REFRESH_TOKEN=${hasRefreshToken}`);
+
         // 1. GMAIL REST API via OAuth2 (NO usa SMTP, usa HTTPS)
-        if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+        if (hasClientId && hasClientSecret && hasRefreshToken) {
             const oauth2Client = new google.auth.OAuth2(
                 process.env.GMAIL_CLIENT_ID,
                 process.env.GMAIL_CLIENT_SECRET,
@@ -34,7 +40,7 @@ const initializeEmail = () => {
             emailMode = 'gmail-api';
 
             const user = process.env.GMAIL_USER || process.env.SMTP_USER;
-            console.log(`📧 Email configurado con GMAIL REST API (${user}) — NO usa SMTP, envía via HTTPS`);
+            console.log(`✅ Email configurado con GMAIL REST API (${user}) — NO usa SMTP, envía via HTTPS`);
         }
         // 2. SMTP Clásico (fallback)
         else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
@@ -56,9 +62,9 @@ const initializeEmail = () => {
                 socketTimeout: 10000,
             });
             emailMode = 'smtp';
-            console.log(`📧 Email configurado con SMTP Clásico: ${process.env.SMTP_HOST} (${process.env.SMTP_USER})`);
+            console.log(`✅ Email configurado con SMTP Clásico: ${process.env.SMTP_HOST} (${process.env.SMTP_USER})`);
         } else {
-            console.log('⚠️ Email en MODO DEMO (sin credenciales de API ni SMTP)');
+            console.error('❌ Email NO configurado — faltan credenciales de Gmail API y SMTP. Los emails NO se enviarán.');
         }
     } catch (error) {
         console.error('❌ Error configurando email:', error);

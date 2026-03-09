@@ -177,9 +177,7 @@ router.post('/forgot-password', async (req, res) => {
         console.log(`[AUTH] Email sent result:`, result);
 
         res.json({
-            message: 'Si el email existe, recibirás un link para restablecer tu contraseña',
-            demo: result.demo,
-            resetLink: result.demo ? result.resetLink : undefined
+            message: 'Si el email existe, recibirás un link para restablecer tu contraseña'
         });
     } catch (error) {
         console.error('[AUTH] Forgot password error:', error);
