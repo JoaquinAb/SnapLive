@@ -171,7 +171,7 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
             items: [
                 {
                     title: 'SnapLive - Suscripción de Evento',
-                    description: 'Creá y administrá un evento con subidas ilimitadas de fotos',
+                    description: 'SnapLive - Suscripción de Evento',
                     quantity: 1,
                     unit_price: EVENT_PRICE.mercadopago,
                     currency_id: 'ARS'
