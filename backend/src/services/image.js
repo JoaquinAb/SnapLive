@@ -40,7 +40,7 @@ class ImageService {
                 fit: 'inside',
                 withoutEnlargement: true
             })
-            .jpeg({ quality: 85 })
+            .webp({ quality: 80 })
             .toBuffer();
 
         // Create thumbnail
@@ -49,7 +49,7 @@ class ImageService {
             .resize(400, 400, {
                 fit: 'cover'
             })
-            .jpeg({ quality: 70 })
+            .webp({ quality: 60 })
             .toBuffer();
 
         // Use demo mode (local storage) or Cloudinary
@@ -99,7 +99,7 @@ class ImageService {
         await fs.mkdir(publicDir, { recursive: true });
         await fs.mkdir(thumbDir, { recursive: true });
 
-        const fileName = `${uuidv4()}.jpg`;
+        const fileName = `${uuidv4()}.webp`;
         const mainPath = path.join(publicDir, fileName);
         const thumbPath = path.join(thumbDir, fileName);
 
