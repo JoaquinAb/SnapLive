@@ -97,9 +97,9 @@ export default function HomePage() {
                         }}>
                             $49.999
                         </div>
-                        <p className="text-muted mb-lg" style={{ fontSize: '0.9rem' }}>
+                        {/*<p className="text-muted mb-lg" style={{ fontSize: '0.9rem' }}>
                             Sin suscripciones. Sin costos ocultos.
-                        </p>
+                        </p>*/}
 
                         <div style={{
                             display: 'flex',
