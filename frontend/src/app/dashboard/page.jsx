@@ -261,7 +261,7 @@ function DashboardContent() {
                                 <span style={{ fontSize: '3rem' }}>💳</span>
                                 <h2 className="mt-lg mb-md">Pago Requerido</h2>
                                 <p className="text-muted mb-xl">
-                                    Cada evento requiere un pago único. Sin suscripciones, sin cargos mensuales.
+                                    Cada evento requiere un pago único.
                                 </p>
 
                                 <div className="mb-xl">
