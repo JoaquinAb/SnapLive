@@ -607,10 +607,9 @@ function DashboardContent() {
                     /* Necesita Pago para primer evento */
                     <div className="card text-center">
                         <span style={{ fontSize: '4rem' }}>💳</span>
-                        <h2 className="mt-lg mb-md">Activá tu Primer Evento</h2>
+                        <h2 className="mt-lg mb-md">Activá tu primer evento</h2>
                         <p className="text-muted mb-xl" style={{ maxWidth: '400px', margin: '0 auto var(--space-xl)' }}>
                             Pagá una sola vez por evento y obtené subidas ilimitadas de fotos.
-                            Sin suscripciones, sin cargos mensuales.
                         </p>
 
                         <div className="mb-xl">
