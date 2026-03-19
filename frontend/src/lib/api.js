@@ -83,7 +83,6 @@ export const api = {
     // Events
     createEvent: (data) => request('/events', { method: 'POST', body: data }),
     getMyEvents: () => request('/events/my-events'),
-    getMyEvent: () => request('/events/my-event'),
     getEvent: (slug) => request(`/events/${slug}`),
     updateEvent: (id, data) => request(`/events/${id}`, { method: 'PUT', body: data }),
     deleteEvent: (id) => request(`/events/${id}`, { method: 'DELETE' }),

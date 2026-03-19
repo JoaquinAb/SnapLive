@@ -34,6 +34,12 @@ router.post('/register', async (req, res) => {
             });
         }
 
+        if (password.length < 6) {
+            return res.status(400).json({
+                error: 'La contraseña debe tener al menos 6 caracteres'
+            });
+        }
+
         // Check if user exists
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {

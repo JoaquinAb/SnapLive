@@ -2,6 +2,7 @@ const express = require('express');
 const { Event, Photo, Payment } = require('../models');
 const { auth, optionalAuth } = require('../middleware/auth');
 const QRService = require('../services/qr');
+const ImageService = require('../services/image');
 const archiver = require('archiver');
 const axios = require('axios');
 
@@ -92,9 +93,6 @@ router.get('/:slug/download-all', auth, async (req, res) => {
     }
 });
 
-// Demo mode - allows testing without real payments
-// Demo mode - allows testing without real payments
-// const DEMO_MODE = process.env.DEMO_MODE === 'true' || !process.env.STRIPE_SECRET_KEY;
 
 /**
  * POST /api/events
@@ -200,35 +198,7 @@ router.get('/my-events', auth, async (req, res) => {
     }
 });
 
-/**
- * GET /api/events/my-event (legacy - returns first event)
- * @deprecated Use /my-events instead
- */
-router.get('/my-event', auth, async (req, res) => {
-    try {
-        const event = await Event.findOne({
-            where: { userId: req.userId },
-            include: [{
-                model: Photo,
-                as: 'photos',
-                order: [['createdAt', 'DESC']],
-                limit: 50
-            }],
-            order: [['createdAt', 'DESC']]
-        });
 
-        if (!event) {
-            return res.status(404).json({
-                error: 'No tenés un evento creado. Creá uno primero.'
-            });
-        }
-
-        res.json({ event });
-    } catch (error) {
-        console.error('Get event error:', error);
-        res.status(500).json({ error: 'Error al obtener el evento' });
-    }
-});
 
 /**
  * GET /api/events/:slug
@@ -314,13 +284,25 @@ router.delete('/:id', auth, async (req, res) => {
         const { id } = req.params;
 
         const event = await Event.findOne({
-            where: { id, userId: req.userId }
+            where: { id, userId: req.userId },
+            include: [{ model: Photo, as: 'photos' }]
         });
 
         if (!event) {
             return res.status(404).json({
                 error: 'Evento no encontrado'
             });
+        }
+
+        // Eliminar fotos del storage externo (Cloudinary/Spaces)
+        if (event.photos && event.photos.length > 0) {
+            for (const photo of event.photos) {
+                try {
+                    await ImageService.deletePhoto(photo.publicId);
+                } catch (err) {
+                    console.error(`Error eliminando foto ${photo.id} del storage:`, err.message);
+                }
+            }
         }
 
         await event.destroy();

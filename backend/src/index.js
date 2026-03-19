@@ -15,7 +15,7 @@ const eventRoutes = require('./routes/events');
 const photoRoutes = require('./routes/photos');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
-const debugRoutes = require('./routes/debug');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -59,7 +59,6 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
-// CORS
 // CORS
 const allowedOrigins = [
     'http://localhost:3000',
@@ -108,7 +107,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/debug', debugRoutes);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -144,8 +143,9 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log('✅ Database connected');
 
-        // Sync models (alter: true to add new columns like cleanup fields)
-        await sequelize.sync({ alter: true });
+        // Sync models (solo usar alter en desarrollo para agregar columnas nuevas)
+        const syncOptions = process.env.NODE_ENV === 'development' ? { alter: true } : {};
+        await sequelize.sync(syncOptions);
         console.log('✅ Database synchronized');
 
         // Start server
