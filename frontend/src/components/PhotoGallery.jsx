@@ -95,84 +95,23 @@ export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false 
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: 'var(--space-xl)',
+                        padding: 'var(--space-lg)',
                         cursor: 'pointer'
                     }}
                 >
-                    <div style={{
-                        position: 'absolute',
-                        top: 'var(--space-lg)',
-                        right: 'var(--space-lg)',
-                        display: 'flex',
-                        gap: 'var(--space-md)',
-                        zIndex: 10
-                    }}>
-                        {/* Download Button */}
-                        {canDelete && (
-                            <button
-                                onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                        const response = await fetch(selectedPhoto.url);
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `snaplive-${selectedPhoto.id}.jpg`;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        window.URL.revokeObjectURL(url);
-                                        document.body.removeChild(a);
-                                    } catch (err) {
-                                        console.error('Error downloading photo:', err);
-                                        alert('Error al descargar la foto');
-                                    }
-                                }}
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    border: 'none',
-                                    color: 'white',
-                                    fontSize: '1.5rem',
-                                    cursor: 'pointer',
-                                    padding: 'var(--space-sm) var(--space-md)',
-                                    borderRadius: 'var(--radius-md)',
-                                }}
-                                title="Descargar"
-                            >
-                                📥
-                            </button>
-                        )}
-
-                        <button
-                            onClick={() => setSelectedPhoto(null)}
-                            style={{
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                border: 'none',
-                                color: 'white',
-                                fontSize: '2rem',
-                                cursor: 'pointer',
-                                padding: 'var(--space-sm) var(--space-md)',
-                                borderRadius: 'var(--radius-md)',
-                                lineHeight: '1'
-                            }}
-                        >
-                            ✕
-                        </button>
-                    </div>
-
                     {/* Botón Anterior */}
                     {hasPrev && (
                         <button
                             onClick={handlePrev}
                             style={{
                                 position: 'absolute',
-                                left: 'var(--space-lg)',
+                                left: 'var(--space-md)',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 background: 'rgba(255, 255, 255, 0.1)',
                                 border: 'none',
                                 color: 'white',
-                                fontSize: '3rem',
+                                fontSize: '2.5rem',
                                 cursor: 'pointer',
                                 padding: 'var(--space-sm) var(--space-md)',
                                 borderRadius: 'var(--radius-md)',
@@ -190,13 +129,13 @@ export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false 
                             onClick={handleNext}
                             style={{
                                 position: 'absolute',
-                                right: 'var(--space-lg)',
+                                right: 'var(--space-md)',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 background: 'rgba(255, 255, 255, 0.1)',
                                 border: 'none',
                                 color: 'white',
-                                fontSize: '3rem',
+                                fontSize: '2.5rem',
                                 cursor: 'pointer',
                                 padding: 'var(--space-sm) var(--space-md)',
                                 borderRadius: 'var(--radius-md)',
@@ -207,42 +146,118 @@ export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false 
                             ›
                         </button>
                     )}
-                    <img
-                        src={selectedPhoto.url}
-                        alt={`Foto de ${selectedPhoto.uploaderName || 'Anónimo'}`}
+
+                    {/* Contenedor central: imagen + barra de acciones */}
+                    <div
+                        onClick={(e) => e.stopPropagation()}
                         style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 'var(--space-md)',
                             maxWidth: '90vw',
                             maxHeight: '90vh',
-                            objectFit: 'contain',
-                            borderRadius: 'var(--radius-md)'
+                            cursor: 'default'
                         }}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                    {canDelete && onDeletePhoto && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDeletePhoto(selectedPhoto.id);
-                                setSelectedPhoto(null);
-                            }}
-                            className="btn btn-secondary"
+                    >
+                        <img
+                            src={selectedPhoto.url}
+                            alt={`Foto de ${selectedPhoto.uploaderName || 'Anónimo'}`}
                             style={{
-                                position: 'absolute',
-                                bottom: 'var(--space-xl)',
-                                left: '50%',
-                                transform: 'translateX(-50%)'
+                                maxWidth: '100%',
+                                maxHeight: 'calc(90vh - 70px)',
+                                objectFit: 'contain',
+                                borderRadius: 'var(--radius-md)'
                             }}
-                        >
-                            🗑️ Eliminar Foto
-                        </button>
-                    )}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: 'var(--space-xl)',
-                        left: 'var(--space-xl)',
-                        color: 'white'
-                    }}>
-                        <p>📷 {selectedPhoto.uploaderName || 'Anónimo'}</p>
+                        />
+
+                        {/* Barra de acciones debajo de la imagen */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 'var(--space-md)',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            padding: 'var(--space-sm) var(--space-lg)',
+                            borderRadius: 'var(--radius-lg)',
+                            backdropFilter: 'blur(10px)',
+                            flexWrap: 'wrap',
+                            justifyContent: 'center'
+                        }}>
+                            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', marginRight: 'var(--space-sm)' }}>
+                                📷 {selectedPhoto.uploaderName || 'Anónimo'}
+                            </span>
+
+                            {canDelete && (
+                                <button
+                                    onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                            const response = await fetch(selectedPhoto.url);
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `snaplive-${selectedPhoto.id}.jpg`;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            window.URL.revokeObjectURL(url);
+                                            document.body.removeChild(a);
+                                        } catch (err) {
+                                            console.error('Error downloading photo:', err);
+                                            alert('Error al descargar la foto');
+                                        }
+                                    }}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        color: 'white',
+                                        fontSize: '0.9rem',
+                                        cursor: 'pointer',
+                                        padding: 'var(--space-xs) var(--space-md)',
+                                        borderRadius: 'var(--radius-md)',
+                                    }}
+                                    title="Descargar"
+                                >
+                                    📥 Descargar
+                                </button>
+                            )}
+
+                            {canDelete && onDeletePhoto && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeletePhoto(selectedPhoto.id);
+                                        setSelectedPhoto(null);
+                                    }}
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.2)',
+                                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                                        color: '#fca5a5',
+                                        fontSize: '0.9rem',
+                                        cursor: 'pointer',
+                                        padding: 'var(--space-xs) var(--space-md)',
+                                        borderRadius: 'var(--radius-md)',
+                                    }}
+                                >
+                                    🗑️ Eliminar
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => setSelectedPhoto(null)}
+                                style={{
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    color: 'white',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    padding: 'var(--space-xs) var(--space-md)',
+                                    borderRadius: 'var(--radius-md)',
+                                }}
+                            >
+                                ✕ Cerrar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
