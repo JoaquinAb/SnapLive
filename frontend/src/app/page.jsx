@@ -1,27 +1,218 @@
 'use client';
 import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
+import { useRef, useEffect } from 'react';
 
 /**
  * Landing Page
- * Página de inicio moderna y visualmente atractiva
+ * Página de inicio moderna y visualmente atractiva con:
+ * - Hero Section con Gradient Mesh interactivo (mouse tracking via CSS vars + canvas partículas)
+ * - Sección de Video Demostrativo (autoplay, muted, loop)
+ * - Scroll Reveal con Intersection Observer en tarjetas de features
  * Redirige a /dashboard si el usuario ya está autenticado
  */
 export default function HomePage() {
     const { isAuthenticated, loading } = useAuth();
     const ctaHref = isAuthenticated ? '/dashboard' : '/register';
+
+    // ─── 1. Hero – Mouse tracking con CSS custom properties ──────────────────
+    // Escuchamos en window para capturar el mouse aunque el puntero
+    // esté levemente fuera de los límites del hero.
+    const heroRef   = useRef(null);
+    const canvasRef = useRef(null);
+    const rafRef    = useRef(null);
+    const mouse     = useRef({ x: 0.5, y: 0.5 });   // objetivo normalizado [0-1]
+    const smooth    = useRef({ x: 0.5, y: 0.5 });   // posición suavizada
+    const particles = useRef([]);
+
+    useEffect(() => {
+        const hero   = heroRef.current;
+        const canvas = canvasRef.current;
+        if (!hero || !canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        /* ── Tamaño del canvas ── */
+        const resize = () => {
+            canvas.width  = hero.offsetWidth;
+            canvas.height = hero.offsetHeight;
+        };
+        resize();
+        const resizeObs = new ResizeObserver(resize);
+        resizeObs.observe(hero);
+
+        /* ── Configuración de partículas ── */
+        const PARTICLE_COUNT = 130;
+        const CURSOR_ATTRACT = 180;   // px — radio de atracción del cursor
+        const ATTRACT_FORCE  = 0.065; // fuerza de atracción (más reactivo al mouse)
+
+        const makeParticle = () => {
+            const hues = [265, 280, 190, 200, 320]; // violeta, cian, rosa
+            return {
+                x:     Math.random() * canvas.width,
+                y:     Math.random() * canvas.height,
+                r:     Math.random() * 2.0 + 0.6,    // radio entre 0.6 y 2.6px
+                alpha: Math.random() * 0.6 + 0.2,    // opacidad 0.2–0.8
+                vx:    (Math.random() - 0.5) * 0.3,
+                vy:    (Math.random() - 0.5) * 0.3,
+                hue:   hues[Math.floor(Math.random() * hues.length)],
+                pulse: Math.random() * Math.PI * 2,  // fase del pulso de brillo
+            };
+        };
+
+        particles.current = Array.from({ length: PARTICLE_COUNT }, makeParticle);
+
+        /* ── Mouse tracking en window ── */
+        const onMouseMove = (e) => {
+            const rect = hero.getBoundingClientRect();
+            mouse.current.x = (e.clientX - rect.left) / rect.width;
+            mouse.current.y = (e.clientY - rect.top)  / rect.height;
+        };
+        window.addEventListener('mousemove', onMouseMove);
+
+        /* ── Loop principal ── */
+        const lerp = (a, b, t) => a + (b - a) * t;
+        let frame = 0;
+
+        const tick = () => {
+            frame++;
+            smooth.current.x = lerp(smooth.current.x, mouse.current.x, 0.06);
+            smooth.current.y = lerp(smooth.current.y, mouse.current.y, 0.06);
+
+            const W  = canvas.width;
+            const H  = canvas.height;
+            const mx = smooth.current.x * W;
+            const my = smooth.current.y * H;
+
+            ctx.clearRect(0, 0, W, H);
+
+            /* ── Actualizar posición de cada partícula ── */
+            particles.current.forEach((p) => {
+                p.pulse += 0.018;
+
+                const dx   = mx - p.x;
+                const dy   = my - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                /* Atracción gravitatoria hacia el cursor */
+                if (dist < CURSOR_ATTRACT && dist > 1) {
+                    const force = (CURSOR_ATTRACT - dist) / CURSOR_ATTRACT;
+                    p.vx += (dx / dist) * force * ATTRACT_FORCE;
+                    p.vy += (dy / dist) * force * ATTRACT_FORCE;
+                }
+
+                /* Fricción + movimiento (0.93 = más vivo, más rápido) */
+                p.vx *= 0.91;
+                p.vy *= 0.91;
+                p.x  += p.vx;
+                p.y  += p.vy;
+
+                /* Wrap-around suave en bordes */
+                if (p.x < -10)  p.x = W + 10;
+                if (p.x > W+10) p.x = -10;
+                if (p.y < -10)  p.y = H + 10;
+                if (p.y > H+10) p.y = -10;
+            });
+
+
+            /* ── Dibujar partículas ── */
+            particles.current.forEach((p) => {
+                /* Brillo pulsante sutil */
+                const pulsedAlpha = p.alpha * (0.75 + 0.25 * Math.sin(p.pulse));
+                const pulsedR     = p.r * (0.9 + 0.15 * Math.sin(p.pulse * 0.7));
+
+                /* Glow suave alrededor de la partícula */
+                const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pulsedR * 3.5);
+                glow.addColorStop(0,   `hsla(${p.hue}, 80%, 75%, ${pulsedAlpha})`);
+                glow.addColorStop(0.5, `hsla(${p.hue}, 70%, 60%, ${pulsedAlpha * 0.4})`);
+                glow.addColorStop(1,   `hsla(${p.hue}, 70%, 60%, 0)`);
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, pulsedR * 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = glow;
+                ctx.fill();
+
+                /* Núcleo brillante de la partícula */
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, pulsedR, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${p.hue}, 90%, 90%, ${Math.min(pulsedAlpha * 1.4, 1)})`;
+                ctx.fill();
+            });
+
+            rafRef.current = requestAnimationFrame(tick);
+        };
+
+        rafRef.current = requestAnimationFrame(tick);
+
+        return () => {
+            window.removeEventListener('mousemove', onMouseMove);
+            resizeObs.disconnect();
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, []);
+
+
+    // ─── 2. Intersection Observer – Scroll Reveal global ────────────────────
+    const featuresGridRef = useRef(null);
+
+    useEffect(() => {
+        // Observamos tanto las feature-cards como cualquier .reveal-item de la página
+        const targets = document.querySelectorAll('.feature-card, .reveal-item');
+        if (!targets.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('feature-card--visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+        );
+
+        targets.forEach((el) => observer.observe(el));
+        return () => observer.disconnect();
+    }, []);
+
+
     return (
         <div className="landing-page">
-            {/* Hero Section */}
-            <section className="hero" style={{
-                minHeight: 'calc(100vh - 70px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: 'var(--space-xl)'
-            }}>
-                <div className="container">
+
+            {/* ══════════════════════════════════════════════
+                HERO SECTION – Gradient Mesh Interactivo
+            ══════════════════════════════════════════════ */}
+            <section
+                ref={heroRef}
+                className="hero hero-interactive"
+                style={{
+                    minHeight: 'calc(100vh - 70px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    padding: 'var(--space-xl)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* Canvas de partículas – único elemento de fondo */}
+                <canvas
+                    ref={canvasRef}
+                    aria-hidden="true"
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                    }}
+                />
+
+                {/* Contenido del Hero */}
+                <div className="container" style={{ position: 'relative', zIndex: 1 }}>
                     <div className="slide-up">
                         <span style={{ fontSize: '4rem', display: 'block', marginBottom: 'var(--space-lg)' }}>
                             📸✨
@@ -32,7 +223,8 @@ export default function HomePage() {
                             background: 'var(--gradient-primary)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
+                            backgroundClip: 'text',
+                            letterSpacing: '-0.02em',
                         }}>
                             Capturá cada momento.<br />Compartilo al instante.
                         </h1>
@@ -55,17 +247,75 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Pricing Section - Quick View */}
+
+            {/* ══════════════════════════════════════════════
+                VIDEO DEMO SECTION
+            ══════════════════════════════════════════════ */}
+            <section className="video-demo-section reveal-item" style={{ '--card-delay': '0ms' }}>
+                <div className="container">
+                    <p className="video-demo-label">¿Cómo se ve en acción?</p>
+                    <h2 className="video-demo-title">Mirá SnapLive en vivo</h2>
+
+                    <div className="video-demo-wrapper">
+                        {/* Glow decorativo detrás del video */}
+                        <div className="video-demo-glow" aria-hidden="true" />
+
+                        <div className="video-demo-container">
+                            {/* Barra de "navegador" decorativa */}
+                            <div className="video-demo-chrome">
+                                <div className="video-demo-dots">
+                                    <span style={{ background: '#ff5f57' }} />
+                                    <span style={{ background: '#ffbd2e' }} />
+                                    <span style={{ background: '#28c840' }} />
+                                </div>
+                                <div className="video-demo-url">snaplive.app/evento/mi-boda</div>
+                            </div>
+
+                            {/* Video placeholder – reemplazá el src con tu archivo real */}
+                            <video
+                                className="video-demo-player"
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                poster="/video-poster.jpg"
+                                aria-label="Video demostrativo de SnapLive"
+                            >
+                                {/* Reemplazá /demo.mp4 con la ruta de tu video real */}
+                                <source src="/demo.mp4" type="video/mp4" />
+                                Tu navegador no soporta la reproducción de video.
+                            </video>
+
+                            {/* Fallback visual cuando no hay video real */}
+                            <div className="video-demo-fallback" aria-hidden="true">
+                                <div className="video-demo-fallback-inner">
+                                    <span style={{ fontSize: '3.5rem' }}>🎬</span>
+                                    <p style={{ color: 'var(--color-text-secondary)', marginTop: '1rem' }}>
+                                        Video demo próximamente
+                                    </p>
+                                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                                        Reemplazá <code style={{ color: 'var(--color-primary-light)' }}>/demo.mp4</code> con tu video real
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══════════════════════════════════════════════
+                PRICING SECTION – Quick View
+            ══════════════════════════════════════════════ */}
             <section style={{
-                padding: '0 0 var(--space-3xl)',
-                marginTop: '-var(--space-2xl)', // Overlap slightly or just pull up
+                padding: 'var(--space-3xl) 0',
                 position: 'relative',
                 zIndex: 10
             }}>
                 <div className="container">
-                    <div className="card fade-in" style={{
+                    <div className="card reveal-item" style={{
                         maxWidth: '500px',
                         margin: '0 auto',
+                        '--card-delay': '0ms',
                         textAlign: 'center',
                         background: 'rgba(20, 20, 25, 0.8)',
                         backdropFilter: 'blur(10px)',
@@ -80,7 +330,7 @@ export default function HomePage() {
                             height: '4px',
                             background: 'var(--gradient-primary)',
                             borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0'
-                        }}></div>
+                        }} />
 
                         <h3 className="mb-md" style={{ fontSize: '1.25rem', color: 'var(--color-text-secondary)' }}>
                             Pase único por evento
@@ -97,9 +347,6 @@ export default function HomePage() {
                         }}>
                             $49.999
                         </div>
-                        {/*<p className="text-muted mb-lg" style={{ fontSize: '0.9rem' }}>
-                            Sin suscripciones. Sin costos ocultos.
-                        </p>*/}
 
                         <div style={{
                             display: 'flex',
@@ -117,20 +364,25 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Features Section */}
+            {/* ══════════════════════════════════════════════
+                FEATURES SECTION – Scroll Reveal (Intersection Observer)
+            ══════════════════════════════════════════════ */}
             <section style={{ padding: 'var(--space-3xl) 0' }}>
                 <div className="container">
-                    <h2 className="text-center mb-xl" style={{ fontSize: '2rem' }}>
+                    <h2 className="text-center mb-xl reveal-item" style={{ fontSize: '2rem', '--card-delay': '0ms' }}>
                         ¿Por qué elegir SnapLive?
                     </h2>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: 'var(--space-xl)'
-                    }}>
-                        {/* Feature 1 */}
-                        <div className="card fade-in" style={{ textAlign: 'center' }}>
+                    <div
+                        ref={featuresGridRef}
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                            gap: 'var(--space-xl)',
+                        }}
+                    >
+                        {/* Las tarjetas usan la clase .feature-card para el Scroll Reveal */}
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '0ms' }}>
                             <span style={{ fontSize: '3rem' }}>📱</span>
                             <h3 className="mt-lg mb-md">Escaneá y Subí</h3>
                             <p className="text-muted">
@@ -139,8 +391,7 @@ export default function HomePage() {
                             </p>
                         </div>
 
-                        {/* Feature 2 */}
-                        <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '100ms' }}>
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '150ms' }}>
                             <span style={{ fontSize: '3rem' }}>⚡</span>
                             <h3 className="mt-lg mb-md">Galería en Tiempo Real</h3>
                             <p className="text-muted">
@@ -149,8 +400,7 @@ export default function HomePage() {
                             </p>
                         </div>
 
-                        {/* Feature 3 */}
-                        <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '200ms' }}>
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '300ms' }}>
                             <span style={{ fontSize: '3rem' }}>📺</span>
                             <h3 className="mt-lg mb-md">Modo Pantalla</h3>
                             <p className="text-muted">
@@ -159,18 +409,16 @@ export default function HomePage() {
                             </p>
                         </div>
 
-                        {/* Feature 4 */}
-                        <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '300ms' }}>
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '450ms' }}>
                             <span style={{ fontSize: '3rem' }}>☁️</span>
                             <h3 className="mt-lg mb-md">60 Días para Descargar</h3>
                             <p className="text-muted">
                                 Todas las fotos guardadas de forma segura en la nube
-                                durante 60 días después del evento. ¡Descargalas a tiempo!
+                                durante 60 días después del evento.
                             </p>
                         </div>
 
-                        {/* Feature 5 */}
-                        <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '400ms' }}>
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '600ms' }}>
                             <span style={{ fontSize: '3rem' }}>🔒</span>
                             <h3 className="mt-lg mb-md">Eventos Privados</h3>
                             <p className="text-muted">
@@ -179,8 +427,7 @@ export default function HomePage() {
                             </p>
                         </div>
 
-                        {/* Feature 6 */}
-                        <div className="card fade-in" style={{ textAlign: 'center', animationDelay: '500ms' }}>
+                        <div className="card feature-card" style={{ textAlign: 'center', '--card-delay': '750ms' }}>
                             <span style={{ fontSize: '3rem' }}>🎉</span>
                             <h3 className="mt-lg mb-md">Para Cualquier Evento</h3>
                             <p className="text-muted">
@@ -192,7 +439,9 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* How It Works */}
+            {/* ══════════════════════════════════════════════
+                HOW IT WORKS
+            ══════════════════════════════════════════════ */}
             <section style={{
                 padding: 'var(--space-3xl) 0',
                 background: 'var(--color-bg-secondary)'
@@ -209,65 +458,34 @@ export default function HomePage() {
                         maxWidth: '900px',
                         margin: '0 auto'
                     }}>
-                        <div className="text-center">
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                background: 'var(--gradient-primary)',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                margin: '0 auto var(--space-lg)'
-                            }}>1</div>
-                            <h4 className="mb-sm">Creá tu Evento</h4>
-                            <p className="text-muted">Registrate y creá tu evento en segundos</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                background: 'var(--gradient-primary)',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                margin: '0 auto var(--space-lg)'
-                            }}>2</div>
-                            <h4 className="mb-sm">Compartí el QR</h4>
-                            <p className="text-muted">Imprimí el código QR y mostralo en tu evento</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div style={{
-                                width: '60px',
-                                height: '60px',
-                                background: 'var(--gradient-primary)',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold',
-                                margin: '0 auto var(--space-lg)'
-                            }}>3</div>
-                            <h4 className="mb-sm">¡Mirá la Magia!</h4>
-                            <p className="text-muted">¡Las fotos aparecen en vivo en la pantalla grande!</p>
-                        </div>
+                        {[
+                            { num: '1', title: 'Creá tu Evento', desc: 'Registrate y creá tu evento en segundos', delay: '0ms' },
+                            { num: '2', title: 'Compartí el QR', desc: 'Imprimí el código QR y mostralo en tu evento', delay: '150ms' },
+                            { num: '3', title: '¡Mirá la Magia!', desc: '¡Las fotos aparecen en vivo en la pantalla grande!', delay: '300ms' },
+                        ].map(({ num, title, desc, delay }) => (
+                            <div key={num} className="text-center reveal-item" style={{ '--card-delay': delay }}>
+                                <div style={{
+                                    width: '60px',
+                                    height: '60px',
+                                    background: 'var(--gradient-primary)',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.5rem',
+                                    fontWeight: 'bold',
+                                    margin: '0 auto var(--space-lg)'
+                                }}>{num}</div>
+                                <h4 className="mb-sm">{title}</h4>
+                                <p className="text-muted">{desc}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
             {/* CTA Section */}
-            <section style={{
-                padding: 'var(--space-3xl) 0',
-                textAlign: 'center'
-            }}>
+            <section className="reveal-item" style={{ padding: 'var(--space-3xl) 0', textAlign: 'center', '--card-delay': '0ms' }}>
                 <div className="container">
                     <h2 className="mb-lg">¿Listo para hacer tu evento inolvidable?</h2>
                     <p className="text-muted mb-xl" style={{ maxWidth: '500px', margin: '0 auto var(--space-xl)' }}>
