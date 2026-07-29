@@ -15,10 +15,10 @@ export default function QRDownload({ eventSlug, qrCodeUrl }) {
     const [qrReady, setQrReady] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // URL que se codifica dentro del QR
-    const eventUrl =
-        qrCodeUrl ||
-        `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snaplive.app'}/event/${eventSlug}`;
+    // URL del evento que se codifica dentro del QR
+    // IMPORTANTE: nunca usar qrCodeUrl aquí — esa es la URL de la *imagen* en Cloudinary,
+    // no el destino al que debe redirigir el QR al escanearlo.
+    const eventUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://snaplive.app'}/event/${eventSlug}`;
 
     /* ── Generar QR en el canvas al montar ── */
     useEffect(() => {
