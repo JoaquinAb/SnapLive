@@ -18,15 +18,15 @@ export default function HomePage() {
     // ─── 1. Hero – Mouse tracking con CSS custom properties ──────────────────
     // Escuchamos en window para capturar el mouse aunque el puntero
     // esté levemente fuera de los límites del hero.
-    const heroRef   = useRef(null);
+    const heroRef = useRef(null);
     const canvasRef = useRef(null);
-    const rafRef    = useRef(null);
-    const mouse     = useRef({ x: 0.5, y: 0.5 });   // objetivo normalizado [0-1]
-    const smooth    = useRef({ x: 0.5, y: 0.5 });   // posición suavizada
+    const rafRef = useRef(null);
+    const mouse = useRef({ x: 0.5, y: 0.5 });   // objetivo normalizado [0-1]
+    const smooth = useRef({ x: 0.5, y: 0.5 });   // posición suavizada
     const particles = useRef([]);
 
     useEffect(() => {
-        const hero   = heroRef.current;
+        const hero = heroRef.current;
         const canvas = canvasRef.current;
         if (!hero || !canvas) return;
 
@@ -34,7 +34,7 @@ export default function HomePage() {
 
         /* ── Tamaño del canvas ── */
         const resize = () => {
-            canvas.width  = hero.offsetWidth;
+            canvas.width = hero.offsetWidth;
             canvas.height = hero.offsetHeight;
         };
         resize();
@@ -44,18 +44,18 @@ export default function HomePage() {
         /* ── Configuración de partículas ── */
         const PARTICLE_COUNT = 130;
         const CURSOR_ATTRACT = 180;   // px — radio de atracción del cursor
-        const ATTRACT_FORCE  = 0.065; // fuerza de atracción (más reactivo al mouse)
+        const ATTRACT_FORCE = 0.065; // fuerza de atracción (más reactivo al mouse)
 
         const makeParticle = () => {
             const hues = [265, 280, 190, 200, 320]; // violeta, cian, rosa
             return {
-                x:     Math.random() * canvas.width,
-                y:     Math.random() * canvas.height,
-                r:     Math.random() * 2.0 + 0.6,    // radio entre 0.6 y 2.6px
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 2.0 + 0.6,    // radio entre 0.6 y 2.6px
                 alpha: Math.random() * 0.6 + 0.2,    // opacidad 0.2–0.8
-                vx:    (Math.random() - 0.5) * 0.3,
-                vy:    (Math.random() - 0.5) * 0.3,
-                hue:   hues[Math.floor(Math.random() * hues.length)],
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
+                hue: hues[Math.floor(Math.random() * hues.length)],
                 pulse: Math.random() * Math.PI * 2,  // fase del pulso de brillo
             };
         };
@@ -66,7 +66,7 @@ export default function HomePage() {
         const onMouseMove = (e) => {
             const rect = hero.getBoundingClientRect();
             mouse.current.x = (e.clientX - rect.left) / rect.width;
-            mouse.current.y = (e.clientY - rect.top)  / rect.height;
+            mouse.current.y = (e.clientY - rect.top) / rect.height;
         };
         window.addEventListener('mousemove', onMouseMove);
 
@@ -79,8 +79,8 @@ export default function HomePage() {
             smooth.current.x = lerp(smooth.current.x, mouse.current.x, 0.06);
             smooth.current.y = lerp(smooth.current.y, mouse.current.y, 0.06);
 
-            const W  = canvas.width;
-            const H  = canvas.height;
+            const W = canvas.width;
+            const H = canvas.height;
             const mx = smooth.current.x * W;
             const my = smooth.current.y * H;
 
@@ -90,8 +90,8 @@ export default function HomePage() {
             particles.current.forEach((p) => {
                 p.pulse += 0.018;
 
-                const dx   = mx - p.x;
-                const dy   = my - p.y;
+                const dx = mx - p.x;
+                const dy = my - p.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 /* Atracción gravitatoria hacia el cursor */
@@ -104,14 +104,14 @@ export default function HomePage() {
                 /* Fricción + movimiento (0.93 = más vivo, más rápido) */
                 p.vx *= 0.91;
                 p.vy *= 0.91;
-                p.x  += p.vx;
-                p.y  += p.vy;
+                p.x += p.vx;
+                p.y += p.vy;
 
                 /* Wrap-around suave en bordes */
-                if (p.x < -10)  p.x = W + 10;
-                if (p.x > W+10) p.x = -10;
-                if (p.y < -10)  p.y = H + 10;
-                if (p.y > H+10) p.y = -10;
+                if (p.x < -10) p.x = W + 10;
+                if (p.x > W + 10) p.x = -10;
+                if (p.y < -10) p.y = H + 10;
+                if (p.y > H + 10) p.y = -10;
             });
 
 
@@ -119,13 +119,13 @@ export default function HomePage() {
             particles.current.forEach((p) => {
                 /* Brillo pulsante sutil */
                 const pulsedAlpha = p.alpha * (0.75 + 0.25 * Math.sin(p.pulse));
-                const pulsedR     = p.r * (0.9 + 0.15 * Math.sin(p.pulse * 0.7));
+                const pulsedR = p.r * (0.9 + 0.15 * Math.sin(p.pulse * 0.7));
 
                 /* Glow suave alrededor de la partícula */
                 const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pulsedR * 3.5);
-                glow.addColorStop(0,   `hsla(${p.hue}, 80%, 75%, ${pulsedAlpha})`);
+                glow.addColorStop(0, `hsla(${p.hue}, 80%, 75%, ${pulsedAlpha})`);
                 glow.addColorStop(0.5, `hsla(${p.hue}, 70%, 60%, ${pulsedAlpha * 0.4})`);
-                glow.addColorStop(1,   `hsla(${p.hue}, 70%, 60%, 0)`);
+                glow.addColorStop(1, `hsla(${p.hue}, 70%, 60%, 0)`);
 
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, pulsedR * 3.5, 0, Math.PI * 2);
@@ -503,7 +503,24 @@ export default function HomePage() {
                 borderTop: '1px solid var(--border-color)',
                 textAlign: 'center'
             }}>
-                <div className="container">
+                <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-md)' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
+                        <a
+                            href="https://www.instagram.com/snaplive.com.ar/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-text-secondary)', textDecoration: 'none', transition: 'color 0.2s' }}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#E1306C'}
+                            onMouseOut={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                            <span>Contáctanos en Instagram</span>
+                        </a>
+                    </div>
                     <p className="text-muted">
                         © 2026 SnapLive. Hecho con ❤️ para eventos increíbles.
                     </p>
