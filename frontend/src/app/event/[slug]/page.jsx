@@ -19,23 +19,10 @@ export default function GuestEventPage() {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('upload');
 
-    const { photos, connected, addPhoto } = usePhotos(slug);
+    const { photos, connected, addPhoto, hasMore, loadMore, loadingMore } = usePhotos(slug);
 
-    // Verificar si el evento ya pasó
-    const isEventFinished = useMemo(() => {
-        if (!event?.eventDate) return false;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const eventDate = new Date(event.eventDate + 'T12:00:00');
-        return eventDate < today;
-    }, [event?.eventDate]);
-
-    // Si el evento está finalizado, mostrar galería por defecto
-    useEffect(() => {
-        if (isEventFinished && activeTab === 'upload') {
-            setActiveTab('gallery');
-        }
-    }, [isEventFinished, activeTab]);
+    // El bloqueo por evento finalizado fue removido (se permite subir fotos en cualquier momento)
+    const isEventFinished = false;
 
     // Obtener detalles del evento
     useEffect(() => {
@@ -221,7 +208,12 @@ export default function GuestEventPage() {
                         />
                     </div>
                 ) : (
-                    <PhotoGallery photos={photos} />
+                    <PhotoGallery 
+                        photos={photos} 
+                        hasMore={hasMore}
+                        onLoadMore={loadMore}
+                        loadingMore={loadingMore}
+                    />
                 )}
             </div>
         </div>

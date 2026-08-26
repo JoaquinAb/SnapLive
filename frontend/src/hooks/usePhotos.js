@@ -7,11 +7,12 @@ import { useWebSocket } from './useWebSocket';
  * usePhotos hook for fetching and managing photos
  * @param {string} eventSlug - Event slug
  */
-export function usePhotos(eventSlug) {
+export function usePhotos(eventSlug, limit = 50) {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [pagination, setPagination] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     // Real-time updates
     const { connected, newPhotos, clearNewPhotos } = useWebSocket(eventSlug);
@@ -22,7 +23,7 @@ export function usePhotos(eventSlug) {
 
         try {
             setLoading(true);
-            const data = await api.getPhotos(eventSlug, page);
+            const data = await api.getPhotos(eventSlug, page, limit);
             setPhotos(data.photos);
             setPagination(data.pagination);
             setError(null);
@@ -31,7 +32,7 @@ export function usePhotos(eventSlug) {
         } finally {
             setLoading(false);
         }
-    }, [eventSlug]);
+    }, [eventSlug, limit]);
 
     // Initial fetch
     useEffect(() => {
@@ -65,13 +66,38 @@ export function usePhotos(eventSlug) {
         setPhotos(prev => prev.filter(p => p.id !== photoId));
     }, []);
 
+    const hasMore = pagination ? pagination.page < pagination.totalPages : false;
+
+    const loadMore = useCallback(async () => {
+        if (!eventSlug || !hasMore || loadingMore) return;
+
+        try {
+            setLoadingMore(true);
+            const data = await api.getPhotos(eventSlug, pagination.page + 1, limit);
+            setPhotos(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const uniqueNewPhotos = data.photos.filter(p => !existingIds.has(p.id));
+                return [...prev, ...uniqueNewPhotos];
+            });
+            setPagination(data.pagination);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [eventSlug, pagination, loadingMore, hasMore, limit]);
+
     return {
         photos,
         loading,
+        loadingMore,
         error,
         pagination,
         connected,
+        hasMore,
         fetchPhotos,
+        loadMore,
         addPhoto,
         removePhoto
     };

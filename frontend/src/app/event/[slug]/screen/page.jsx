@@ -35,7 +35,7 @@ function ScreenModeContent() {
     const [showControls, setShowControls] = useState(!isResolumeMode);
     const [viewMode, setViewMode] = useState(isResolumeMode ? 'fullscreen' : 'grid');
 
-    const { photos, connected } = usePhotos(slug);
+    const { photos, connected } = usePhotos(slug, 500);
 
     // Obtener color de fondo según parámetro
     const getBgColor = () => {

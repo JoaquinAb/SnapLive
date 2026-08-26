@@ -28,17 +28,7 @@ router.post('/:eventSlug', upload.array('photos', 5), async (req, res) => {
             });
         }
 
-        // Verificar si el evento ya pasó (permitir subidas hasta 24hs después de la fecha del evento)
-        const now = new Date();
-        const eventDateEnd = new Date(event.eventDate + 'T12:00:00');
-        eventDateEnd.setDate(eventDateEnd.getDate() + 1); // Agregar 1 día (24hs)
-        eventDateEnd.setHours(23, 59, 59, 999); // Hasta el final del día siguiente
-
-        if (now > eventDateEnd) {
-            return res.status(403).json({
-                error: 'Este evento ya finalizó. No se pueden subir más fotos.'
-            });
-        }
+        // El bloqueo por evento finalizado fue removido (se permite subir fotos en cualquier momento)
 
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({

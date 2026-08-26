@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
  * Componente PhotoGallery
  * Grilla de fotos responsive con lightbox
  */
-export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false }) {
+export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false, onLoadMore, hasMore, loadingMore }) {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     // Índices y navegación
@@ -81,6 +81,19 @@ export default function PhotoGallery({ photos, onDeletePhoto, canDelete = false 
                     </div>
                 ))}
             </div>
+
+            {hasMore && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-xl)' }}>
+                    <button 
+                        onClick={onLoadMore} 
+                        className="btn btn-secondary"
+                        disabled={loadingMore}
+                        style={{ padding: 'var(--space-sm) var(--space-xl)' }}
+                    >
+                        {loadingMore ? 'Cargando...' : 'Cargar más fotos'}
+                    </button>
+                </div>
+            )}
 
             {/* Lightbox */}
             {selectedPhoto && (
