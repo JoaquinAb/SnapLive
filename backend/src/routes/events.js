@@ -66,16 +66,17 @@ router.get('/:slug/download-all', auth, async (req, res) => {
         // Add photos to zip
         for (const photo of photos) {
             try {
-                // Fetch image stream
+                // Fetch image as arraybuffer to prevent stream hangs
                 const response = await axios({
                     url: photo.url,
                     method: 'GET',
-                    responseType: 'stream'
+                    responseType: 'arraybuffer',
+                    timeout: 15000 // 15 seconds max per photo
                 });
 
                 // Add to archive
                 const photoName = `photo-${photo.id}.jpg`;
-                archive.append(response.data, { name: photoName });
+                archive.append(Buffer.from(response.data), { name: photoName });
             } catch (downloadError) {
                 console.error(`Error downloading photo ${photo.id}:`, downloadError.message);
                 // Continue with other photos even if one fails

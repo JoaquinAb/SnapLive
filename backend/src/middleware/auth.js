@@ -7,16 +7,21 @@ const { User } = require('../models');
  */
 const auth = async (req, res, next) => {
     try {
-        // Get token from header
+        // Get token from header or query string
+        let token;
         const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        } else if (req.query.token) {
+            token = req.query.token;
+        }
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!token) {
             return res.status(401).json({
                 error: 'Acceso denegado. No se proporcionó token.'
             });
         }
-
-        const token = authHeader.split(' ')[1];
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -53,10 +58,16 @@ const auth = async (req, res, next) => {
  */
 const optionalAuth = async (req, res, next) => {
     try {
+        let token;
         const authHeader = req.headers.authorization;
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
+            token = authHeader.split(' ')[1];
+        } else if (req.query.token) {
+            token = req.query.token;
+        }
+
+        if (token) {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await User.findByPk(decoded.userId);
             if (user) {

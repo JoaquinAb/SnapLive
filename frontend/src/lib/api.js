@@ -109,6 +109,10 @@ export const api = {
 
     // Downloads
     downloadEventPhotos: (slug) => downloadFile(`/events/${slug}/download-all`),
+    getDownloadEventPhotosUrl: (slug) => {
+        const token = getToken();
+        return `${API_URL}/events/${slug}/download-all?token=${token}`;
+    },
 };
 
 /**
