@@ -246,7 +246,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
  * @param {number} amount - Payment amount
  * @returns {Promise<{success: boolean, demo?: boolean}>}
  */
-const sendPaymentConfirmationEmail = async (email, userName, amount = 4999) => {
+const sendPaymentConfirmationEmail = async (email, userName, amount = 2999900) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const dashboardLink = `${frontendUrl}/dashboard`;
     const formattedAmount = (amount / 100).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' });

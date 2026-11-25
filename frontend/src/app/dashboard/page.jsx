@@ -273,7 +273,7 @@ function DashboardContent() {
                                         WebkitTextFillColor: 'transparent',
                                         backgroundClip: 'text'
                                     }}>
-                                        $49.999
+                                        $29.999
                                     </span>
                                     <span className="text-muted ml-sm">/ evento</span>
                                 </div>
@@ -606,7 +606,7 @@ function DashboardContent() {
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text'
                             }}>
-                                $49.999
+                                $29.999
                             </span>
                             <span className="text-muted ml-sm">/ evento</span>
                         </div>

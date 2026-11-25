@@ -345,7 +345,7 @@ export default function HomePage() {
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'
                         }}>
-                            $39.999
+                            $29.999
                         </div>
 
                         <div style={{

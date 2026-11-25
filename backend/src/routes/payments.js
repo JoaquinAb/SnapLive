@@ -11,7 +11,7 @@ const DEMO_MODE = process.env.DEMO_MODE === 'true';
 // Event subscription price 
 const EVENT_PRICE = {
     stripe: parseInt(process.env.STRIPE_PRICE_CENTS) || 2999, // 29.99 USD in cents
-    mercadopago: parseInt(process.env.MERCADOPAGO_PRICE_ARS) || 4999 // 4999 ARS
+    mercadopago: parseInt(process.env.MERCADOPAGO_PRICE_ARS) || 29999 // 29999 ARS
 };
 
 /**
@@ -142,7 +142,7 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
                 userId: req.userId,
                 provider: 'demo',
                 paymentId: `demo_mp_${Date.now()}`,
-                amount: 4999,
+                amount: EVENT_PRICE.mercadopago,
                 currency: 'ARS',
                 status: 'completed',
                 metadata: { demo: true }
@@ -151,7 +151,7 @@ router.post('/mercadopago/create-preference', auth, async (req, res) => {
             // Send confirmation email
             const user = await User.findByPk(req.userId);
             if (user) {
-                sendPaymentConfirmationEmail(user.email, user.name, 499900);
+                sendPaymentConfirmationEmail(user.email, user.name, EVENT_PRICE.mercadopago * 100);
             }
 
             return res.json({
